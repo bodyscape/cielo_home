@@ -1,6 +1,6 @@
-# Maestro MCZ
+# Cielo Wigle 
 
-A Home Assistant Custom Component for Maestro MCZ (cloud)
+A Home Assistant Custom Component for Cielo Wigle (cloud)
 
 ## Functionality
 
