@@ -1,6 +1,6 @@
 # Cielo Wigle 
 
-A Home Assistant Custom Component for Cielo Wigle (cloud)
+A Home Assistant Custom Component for Cielo Home (cloud)
 
 ## Functionality
 
@@ -16,23 +16,23 @@ Currently it provides a Climate entity and a temperature sensor as an initial re
 2. Go to HACS "Integrations >" section
 3. Click 3 dots in top right
 4. Click "Custom repositories"
-5. Add repository https://github.com/bodyscape/cielo_wigle with category `Integration`
+5. Add repository https://github.com/bodyscape/cielo_home with category `Integration`
 6. In the lower right click "+ Explore & Download repositories"
-7. Search for "Cielo Wigle (cloud)" and add it
+7. Search for "Cielo Home (cloud)" and add it
 8. In the Home Assistant (HA) UI go to "Configuration"
 9. Click "Integrations"
 10. Click "+ Add Integration"
-11. Search for "Cielo Wigle (cloud)"
+11. Search for "Cielo Home (cloud)"
 
 ### Manual
 
 1. Using the tool of choice open the directory (folder) for your [HA configuration](https://www.home-assistant.io/docs/configuration/) (where you find `configuration.yaml`).
 2. If you do not have a `custom_components` directory (folder) there, you need to create it.
-3. In the `custom_components` directory (folder) create a new folder called `cielo_wigle`.
-4. Download _all_ the files from the `custom_components/cielo_wigle/` directory (folder) in this repository.
+3. In the `custom_components` directory (folder) create a new folder called `cielo_home`.
+4. Download _all_ the files from the `custom_components/cielo_home/` directory (folder) in this repository.
 5. Place the files you downloaded in the new directory (folder) you created.
 6. Restart Home Assistant
 7. In the Home Assistant (HA) UI go to "Configuration"
 8. Click "Integrations"
 9. Click "+ Add Integration"
-10. Search for "Cielo Wigle (cloud)"
+10. Search for "Cielo Home (cloud)"
