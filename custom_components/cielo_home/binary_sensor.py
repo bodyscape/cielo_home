@@ -23,10 +23,8 @@ async def async_setup_entry(
     entities = []
     cw_devices = hass.data[DOMAIN][config_entry.entry_id + "_devices"]
     for device in cw_devices:
-
-        if device.get_fan_modes() is not None:
-            entity = CieloHomeStatusBinarySensor(device)
-            entities.append(entity)
+        entity = CieloHomeStatusBinarySensor(device)
+        entities.append(entity)
 
     async_add_entities(entities)
 

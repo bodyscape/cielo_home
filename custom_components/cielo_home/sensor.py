@@ -29,50 +29,6 @@ async def async_setup_entry(
     cw_devices = hass.data[DOMAIN][config_entry.entry_id + "_devices"]
     for device in cw_devices:
 
-        # entity = CieloHomeSensorEntity(
-        #     device,
-        #     "Online",
-        #     None,
-        #     SensorDeviceClass.ENUM,
-        #     None,
-        #     device.get_uniqueid() + "_status",
-        #     "mdi:lan-connect",
-        #     "get_status_str",
-        #     str,
-        #     ["on", "off"],
-        # )
-        # entities.append(entity)
-
-        # entity = CieloHomeSensorEntity(
-        #     device,
-        #     "Power",
-        #     None,
-        #     SensorDeviceClass.ENUM,
-        #     None,
-        #     device.get_uniqueid() + "_power",
-        #     "mdi:power",
-        #     "get_power",
-        #     str,
-        #     ["on", "off"],
-        # )
-        # entities.append(entity)
-
-        # if device.get_turbo() != "":
-        #     entity = CieloHomeSensorEntity(
-        #         device,
-        #         "Turbo",
-        #         None,
-        #         SensorDeviceClass.ENUM,
-        #         None,
-        #         device.get_uniqueid() + "_turbo",
-        #         "mdi:speedometer",
-        #         "get_turbo",
-        #         str,
-        #         ["on", "off"],
-        #     )
-
-        #     entities.append(entity)
-
         entity = CieloHomeSensorEntity(
             device,
             "Temperature",
@@ -91,24 +47,6 @@ async def async_setup_entry(
         )
         entities.append(entity)
 
-        # entity = CieloHomeSensorEntity(
-        #     device,
-        #     "Target Temperature",
-        #     (
-        #         UnitOfTemperature.FAHRENHEIT
-        #         if device.get_is_device_fahrenheit()
-        #         else UnitOfTemperature.CELSIUS
-        #     ),
-        #     SensorDeviceClass.TEMPERATURE,
-        #     SensorStateClass.MEASUREMENT,
-        #     device.get_uniqueid() + "_target_temperature",
-        #     "mdi:home-thermometer",
-        #     "get_target_temperature",
-        #     int,
-        #     None,
-        # )
-        # entities.append(entity)
-
         if device.get_humidity() > 0:
             entity = CieloHomeSensorEntity(
                 device,
@@ -123,51 +61,6 @@ async def async_setup_entry(
                 None,
             )
             entities.append(entity)
-
-        # if device.get_fanspeed() != "":
-        #     entity = CieloHomeSensorEntity(
-        #         device,
-        #         "Fan",
-        #         None,
-        #         SensorDeviceClass.ENUM,
-        #         None,
-        #         device.get_uniqueid() + "_fan",
-        #         "mdi:fan",
-        #         "get_fanspeed",
-        #         str,
-        #         device.get_available_fan_modes().split(":"),
-        #     )
-        #     entities.append(entity)
-
-        # if device.get_swing() != "":
-        #     entity = CieloHomeSensorEntity(
-        #         device,
-        #         "Swing",
-        #         None,
-        #         SensorDeviceClass.ENUM,
-        #         None,
-        #         device.get_uniqueid() + "_swing",
-        #         "mdi:angle-acute",
-        #         "get_swing",
-        #         str,
-        #         device.get_available_swing_modes().split(":"),
-        #     )
-        #     entities.append(entity)
-
-        # entity = CieloHomeSensorEntity(
-        #     device,
-        #     "HVAC Mode",
-        #     None,
-        #     SensorDeviceClass.ENUM,
-        #     None,
-        #     device.get_uniqueid() + "_hvac",
-        #     "mdi:thermostat",
-        #     "get_mode",
-        #     str,
-        #     device.get_available_modes().split(":"),
-        # )
-
-        # entities.append(entity)
 
     async_add_entities(entities)
 
