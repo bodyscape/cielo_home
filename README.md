@@ -1,6 +1,6 @@
 # Cielo Home 
 
-A Home Assistant Custom Component for Cielo Home (cloud)
+A Home Assistant Custom Component for Cielo Home
 
 ## Functionality
 
@@ -18,11 +18,11 @@ Currently it provides a Climate entity and a temperature sensor as an initial re
 4. Click "Custom repositories"
 5. Add repository https://github.com/bodyscape/cielo_home with category `Integration`
 6. In the lower right click "+ Explore & Download repositories"
-7. Search for "Cielo Home (cloud)" and add it
+7. Search for "Cielo Home" and add it
 8. In the Home Assistant (HA) UI go to "Configuration"
 9. Click "Integrations"
 10. Click "+ Add Integration"
-11. Search for "Cielo Home (cloud)"
+11. Search for "Cielo Home"
 
 ### Manual
 
@@ -35,4 +35,4 @@ Currently it provides a Climate entity and a temperature sensor as an initial re
 7. In the Home Assistant (HA) UI go to "Configuration"
 8. Click "Integrations"
 9. Click "+ Add Integration"
-10. Search for "Cielo Home (cloud)"
+10. Search for "Cielo Home"
