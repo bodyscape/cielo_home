@@ -1,4 +1,4 @@
-# Cielo Wigle 
+# Cielo Home 
 
 A Home Assistant Custom Component for Cielo Home (cloud)
 
