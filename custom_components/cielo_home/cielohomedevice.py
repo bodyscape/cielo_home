@@ -608,7 +608,7 @@ class CieloHomeDevice:
         if data["mac_address"] == self.get_mac_address():
             self._device["latEnv"]["temp"] = data["lat_env_var"]["temperature"]
             self._device["latEnv"]["humidity"] = data["lat_env_var"]["humidity"]
-            self._device["deviceStatus"] = data["action"]["device_status"]
+            self._device["deviceStatus"] = data["device_status"]
             self._device["latestAction"]["temp"] = data["action"]["temp"]
             self._device["latestAction"]["fanspeed"] = data["action"]["fanspeed"]
             self._device["latestAction"]["turbo"] = data["action"]["turbo"]
