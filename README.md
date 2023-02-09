@@ -4,9 +4,7 @@ A Home Assistant Custom Component for Cielo Home
 
 ## Functionality
 
-This integration aims to use the same API as the app to enable control via Home Assistant.
-
-Currently it provides a Climate entity and a temperature sensor as an initial release.
+![image](https://user-images.githubusercontent.com/30115568/217594793-e3009fee-bd3d-47aa-8638-dfc5af8b4e92.png)
 
 ## Installation
 
