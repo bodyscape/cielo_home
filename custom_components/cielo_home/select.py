@@ -41,12 +41,14 @@ async def async_setup_entry(
 
 
 class CieloHomeFanSelect(CieloHomeEntity, SelectEntity):
-    """Representation of a SleepIQ select entity."""
+    """Representation of a select entity."""
 
     def __init__(self, device: CieloHomeDevice) -> None:
         """c"""
         super().__init__(
-            device, device.get_name() + " " + "Fan", device.get_uniqueid() + "_fan"
+            device,
+            device.get_name() + " " + "Fan",
+            device.get_uniqueid() + "_fan",
         )
         self._attr_options = self._device.get_fan_modes()
         self._attr_icon = "mdi:fan"
@@ -63,7 +65,7 @@ class CieloHomeFanSelect(CieloHomeEntity, SelectEntity):
 
 
 class CieloHomeSwingSelect(CieloHomeEntity, SelectEntity):
-    """Representation of a SleepIQ select entity."""
+    """Representation of a select entity."""
 
     def __init__(self, device: CieloHomeDevice) -> None:
         """c"""
@@ -85,7 +87,7 @@ class CieloHomeSwingSelect(CieloHomeEntity, SelectEntity):
 
 
 class CieloHomePresetSelect(CieloHomeEntity, SelectEntity):
-    """Representation of a SleepIQ select entity."""
+    """Representation of a select entity."""
 
     def __init__(self, device: CieloHomeDevice) -> None:
         """c"""
@@ -109,7 +111,7 @@ class CieloHomePresetSelect(CieloHomeEntity, SelectEntity):
 
 
 class CieloHomeHvacSelect(CieloHomeEntity, SelectEntity):
-    """Representation of a SleepIQ select entity."""
+    """Representation of a select entity."""
 
     def __init__(self, device: CieloHomeDevice) -> None:
         """c"""

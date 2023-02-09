@@ -39,10 +39,12 @@ class CieloHomeSwitch(CieloHomeEntity, SwitchEntity):
     def turn_on(self, **kwargs: Any) -> None:
         """Turn the device on."""
         self._device.send_power_on()
+        self._update_internal_state()
 
     def turn_off(self, **kwargs: Any) -> None:
         """Turn the device off."""
         self._device.send_power_off()
+        self._update_internal_state()
 
     def _update_internal_state(self):
         """c"""

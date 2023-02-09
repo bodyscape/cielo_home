@@ -28,9 +28,10 @@ class CieloHomeEntity(Entity):
         )
 
     def _update_internal_state(self):
-        self._attr_available = self._device.get_status()
+        raise NotImplementedError()
 
     def state_updated(self, data) -> None:
         """c"""
+        self._attr_available = self._device.get_status()
         self._update_internal_state()
         self.schedule_update_ha_state(False)

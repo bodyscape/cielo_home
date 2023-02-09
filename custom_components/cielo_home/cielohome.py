@@ -3,7 +3,7 @@ import asyncio
 from datetime import datetime
 import json
 import logging
-from threading import Timer
+from threading import Lock, Timer
 
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
 
@@ -28,6 +28,8 @@ class CieloHome:
         self._headers: dict[str, str] = {}
         self._websocket: ClientWebSocketResponse
         self.__event_listener: list[object] = []
+        self._msg_to_send: list[object] = []
+        self._msg_lock = Lock()
         self._timer_refresh: Timer
         self._timer_ping: Timer
         self._last_refresh_token_ts: int
@@ -189,6 +191,23 @@ class CieloHome:
                         except asyncio.exceptions.CancelledError:
                             pass
 
+                        msg_sent: bool = False
+                        msg: object = None
+                        try:
+                            if len(self._msg_to_send) > 0:
+                                self._msg_lock.acquire()
+                                msg_sent = True
+                                while len(self._msg_to_send) > 0:
+                                    msg = self._msg_to_send.pop(0)
+                                    await self._websocket.send_json(msg)
+                                    msg = None
+                        except Exception:
+                            if msg is not None:
+                                self._msg_to_send.append(msg)
+                        finally:
+                            if msg_sent:
+                                self._msg_lock.release()
+
                         await asyncio.sleep(0.1)
         except Exception:
             self._last_refresh_token_ts = self.get_ts() - 1200
@@ -210,7 +229,7 @@ class CieloHome:
 
     def start_timer_ping(self):
         """c"""
-        self._timer_ping = Timer(600, self.send_ping)
+        self._timer_ping = Timer(550, self.send_ping)
         self._timer_ping.start()  # Here run is called
 
     def send_ping(self):
@@ -222,7 +241,10 @@ class CieloHome:
     def send_json(self, data):
         """c"""
         _LOGGER.debug("Send Json : %s", json.dumps(data))
-        asyncio.run(self._websocket.send_json(data))
+        self._msg_lock.acquire()
+        self._msg_to_send.append(data)
+        self._msg_lock.release()
+        # asyncio.run(self._websocket.send_json(data))
 
     def get_ts(self) -> int:
         """c"""

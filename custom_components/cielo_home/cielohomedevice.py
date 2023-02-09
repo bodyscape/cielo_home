@@ -575,6 +575,8 @@ class CieloHomeDevice:
             self.send_swing_auto()
         elif swing_mode == SWING_AUTO_STOP:
             self.send_swing_auto_stop()
+        elif swing_mode == SWING_ADJUST:
+            self.send_swing_adjust()
         elif swing_mode == SWING_POSITION1:
             self.send_swing_pos1()
         elif swing_mode == SWING_POSITION2:
