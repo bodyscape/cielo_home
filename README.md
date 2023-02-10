@@ -10,6 +10,8 @@ A exemple of climat card i use : https://github.com/nervetattoo/simple-thermosta
 
 ![image](https://user-images.githubusercontent.com/30115568/218138232-3249b15e-ce08-4eee-bbeb-178d7e150caa.png)
 
+``` yaml
+# YAML
 - type: custom:simple-thermostat
         entity: climate.living_room
         step_size: 1
@@ -28,6 +30,7 @@ A exemple of climat card i use : https://github.com/nervetattoo/simple-thermosta
             _name: Swing Mode
           preset:
             _name: Preset Mode
+```
 
 ## Installation
 
