@@ -1,8 +1,10 @@
 """c"""
 import asyncio
+import copy
 from datetime import datetime
 import json
 import logging
+import pathlib
 from threading import Lock, Timer
 
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
@@ -72,6 +74,7 @@ class CieloHome:
             "x-api-key": "7xTAU4y4B34u8DjMsODlEyprRRQEsbJ3IB7vZie4",
         }
 
+        _LOGGER.debug("Call refreshToken")
         async with ClientSession() as session:
             async with session.post(
                 "https://" + URL_API + "/web/login",
@@ -91,11 +94,9 @@ class CieloHome:
 
                     if connect_ws and self._access_token != "":
                         asyncio.create_task(self.async_connect_wss())
-                    # task.cancel()
 
                     self._last_refresh_token_ts = self.get_ts()
                     self.start_timer_refreshtoken()
-                    # self._websocket.close()
                     return self._access_token != ""
 
         return False
@@ -114,6 +115,7 @@ class CieloHome:
 
     async def async_refresh_token(self):
         """Set up Cielo Home refresh."""
+        _LOGGER.debug("Call refreshToken")
         self._headers["authorization"] = self._access_token
         async with ClientSession() as session:
             async with session.get(
@@ -131,6 +133,7 @@ class CieloHome:
                         self._refresh_token = repjson["data"]["refreshToken"]
                         self._last_refresh_token_ts = self.get_ts()
                         self._is_running = False
+                        _LOGGER.debug("Call refreshToken success")
 
     async def async_connect_wss(self):
         """c"""
@@ -174,11 +177,18 @@ class CieloHome:
                                 WSMsgType.CLOSED,
                                 WSMsgType.CLOSING,
                             ):
+                                _LOGGER.error("Websocket closed : %s", msg.type)
                                 break
 
                             try:
                                 js_data = json.loads(msg.data)
-                                _LOGGER.debug("Receive Json : %s", json.dumps(msg))
+                                if _LOGGER.isEnabledFor(logging.DEBUG):
+                                    debug_data = copy.copy(js_data)
+                                    debug_data["accessToken"] = "*****"
+                                    debug_data["refreshToken"] = "*****"
+                                    _LOGGER.debug(
+                                        "Receive Json : %s", json.dumps(debug_data)
+                                    )
                             except ValueError:
                                 pass
 
@@ -186,7 +196,6 @@ class CieloHome:
                                 for listener in self.__event_listener:
                                     listener.data_receive(js_data)
                         except asyncio.exceptions.TimeoutError:
-                            # print("TimeoutError ", self.get_ts())
                             pass
                         except asyncio.exceptions.CancelledError:
                             pass
@@ -199,9 +208,16 @@ class CieloHome:
                                 msg_sent = True
                                 while len(self._msg_to_send) > 0:
                                     msg = self._msg_to_send.pop(0)
+                                    if _LOGGER.isEnabledFor(logging.DEBUG):
+                                        debug_data = copy.copy(msg)
+                                        debug_data["token"] = "*****"
+                                        _LOGGER.debug(
+                                            "Send Json : %s", json.dumps(debug_data)
+                                        )
                                     await self._websocket.send_json(msg)
                                     msg = None
                         except Exception:
+                            _LOGGER.error("Failed to send Json")
                             if msg is not None:
                                 self._msg_to_send.append(msg)
                         finally:
@@ -210,6 +226,7 @@ class CieloHome:
 
                         await asyncio.sleep(0.1)
         except Exception:
+            _LOGGER.error("Websocket error, try reconnecting")
             self._last_refresh_token_ts = self.get_ts() - 1200
 
         if not self._websocket.closed:
@@ -236,15 +253,14 @@ class CieloHome:
         """c"""
         data = {"message": "Ping Connection Reset", "token": self._access_token}
         self.start_timer_ping()
+        _LOGGER.debug("Send Ping Connection Reset")
         self.send_json(data)
 
     def send_json(self, data):
         """c"""
-        _LOGGER.debug("Send Json : %s", json.dumps(data))
         self._msg_lock.acquire()
         self._msg_to_send.append(data)
         self._msg_lock.release()
-        # asyncio.run(self._websocket.send_json(data))
 
     def get_ts(self) -> int:
         """c"""
@@ -253,11 +269,26 @@ class CieloHome:
     async def async_get_thermostats(self):
         """Get de the list Devices/Thermostats."""
 
+        # # Opening JSON file
+        # fullpath: str = str(pathlib.Path(__file__).parent.resolve()) + "/devices.json"
+        # file = open(fullpath)
+
+        # # returns JSON object as
+        # # a dictionary
+        # data = json.load(file)
+
+        # # Iterating through the json
+        # # list
+        # devices = data["data"]["listDevices"]
+
+        # file.close()
+
         self._headers["authorization"] = self._access_token
+        appliance_ids = ""
         devices = None
         async with ClientSession() as session:
             async with session.get(
-                "https://" + URL_API + "/web/devices?limit=100",
+                "https://" + URL_API + "/web/devices?limit=420",
                 headers=self._headers,
             ) as response:
                 if response.status == 200:
@@ -272,7 +303,7 @@ class CieloHome:
             for device in devices:
                 appliance_id: str = str(device["applianceId"])
                 if appliance_id in appliance_ids:
-                    break
+                    continue
 
                 if appliance_ids != "":
                     appliance_ids = appliance_ids + ","
@@ -280,6 +311,8 @@ class CieloHome:
                 appliance_ids = appliance_ids + str(appliance_id)
 
             appliances = await self.async_get_thermostat_info(appliance_ids)
+            if _LOGGER.isEnabledFor(logging.DEBUG):
+                _LOGGER.debug("appliances : %s", json.dumps(appliances))
             for device in devices:
                 for appliance in appliances:
                     if appliance["applianceId"] == device["applianceId"]:
