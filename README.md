@@ -6,6 +6,9 @@ A Home Assistant Custom Component for Cielo Home
 
 ![image](https://user-images.githubusercontent.com/30115568/217594793-e3009fee-bd3d-47aa-8638-dfc5af8b4e92.png)
 
+![image](https://user-images.githubusercontent.com/30115568/218138232-3249b15e-ce08-4eee-bbeb-178d7e150caa.png)
+
+
 ## Installation
 
 ### HACS
