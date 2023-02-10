@@ -6,14 +6,14 @@ A Home Assistant Custom Component for Cielo Home
 
 ![image](https://user-images.githubusercontent.com/30115568/217594793-e3009fee-bd3d-47aa-8638-dfc5af8b4e92.png)
 
-A exemple of climat card i use : https://github.com/nervetattoo/simple-thermostat
+A exemple of thermostat card i use : https://github.com/nervetattoo/simple-thermostat
 
 ![image](https://user-images.githubusercontent.com/30115568/218138232-3249b15e-ce08-4eee-bbeb-178d7e150caa.png)
 
 ``` yaml
 # YAML
 - type: custom:simple-thermostat
-        entity: climate.living_room
+        entity: climate.basement
         step_size: 1
         layout:
           step: row
