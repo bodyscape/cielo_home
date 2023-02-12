@@ -1,3 +1,5 @@
+https://www.paypal.com/donate/?hosted_button_id=BKQL5JUGZBZXU
+
 # Cielo Home 
 
 A Home Assistant Custom Component for Cielo Home
