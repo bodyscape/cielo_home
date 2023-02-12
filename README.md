@@ -1,5 +1,5 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
-[![cielo_home](https://img.shields.io/github/v/release/bodyscape/all.svg?style=for-the-badge)](https://github.com/bodyscape/cielo_home)
+[![cielo_home](https://img.shields.io/github/v/release/bodyscape/all.svg?style=for-the-badge)](https://github.com/bodyscape/cielo_home/releases)
 ![Maintenance](https://img.shields.io/maintenance/yes/2023.svg?style=for-the-badge)
 [![](https://img.shields.io/badge/MAINTAINER-bodyscape-red?style=for-the-badge)](https://github.com/bodyscape)
 
