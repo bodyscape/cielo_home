@@ -1,5 +1,5 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/integration)
-[![spotcast](https://img.shields.io/github/release/fondberg/spotcast.svg?1)](https://github.com/bodyscape/cielo_home)
+[![cielo_home](https://img.shields.io/github/v/release/bodycape/cielo_home.svg?1)](https://github.com/bodyscape/cielo_home)
 ![Maintenance](https://img.shields.io/maintenance/yes/2022.svg)
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?hosted_button_id=BKQL5JUGZBZXU)
