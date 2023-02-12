@@ -1,7 +1,7 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 [![cielo_home](https://img.shields.io/github/v/release/bodyscape/all.svg?style=for-the-badge)](https://github.com/bodyscape/cielo_home)
-![Maintenance](https://img.shields.io/maintenance/yes/2023.svg)
-[![](https://img.shields.io/badge/MAINTAINER-%40ollo69-red?style=for-the-badge)](https://github.com/bodyscape)
+![Maintenance](https://img.shields.io/maintenance/yes/2023.svg?style=for-the-badge)
+[![](https://img.shields.io/badge/MAINTAINER-bodyscape-red?style=for-the-badge)](https://github.com/bodyscape)
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate/?hosted_button_id=BKQL5JUGZBZXU)
 [![Buy me a coffee](https://img.shields.io/static/v1.svg?label=Buy%20me%20a%20coffee&message=🥨&color=black&logo=buy%20me%20a%20coffee&logoColor=white&labelColor=6f4e37)](https://www.buymeacoffee.com/bodyscape)
