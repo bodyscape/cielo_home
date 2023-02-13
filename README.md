@@ -43,6 +43,13 @@ A exemple of thermostat card i use : https://github.com/nervetattoo/simple-therm
 ## Installation
 
 ### HACS
+Click on the button below to add the integration:
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=bodyscape&repository=cielo_home&category=integration)
+
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=cielo_home)
+
+#OR
 
 1. Install [HACS](https://hacs.xyz/)
 2. Go to HACS "Integrations >" section
