@@ -40,38 +40,34 @@ A exemple of thermostat card i use : https://github.com/nervetattoo/simple-therm
             _name: Preset Mode
 ```
 
-## Installation
+# Installation
 
-### HACS
-Click on the button below to add the integration:
+## With HACS
+
+Click on the button below to automatically navigate to the repository within HACS:
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=bodyscape&repository=cielo_home&category=integration)
 
+Alternatively, follow the steps below:
+
+1. Click on the `Explore & Download Repositories` button and search for Cielo.
+2. On the Cielo page, click on the `Download` button.
+
+## Manual
+Copy the `cielo_home` directory, from `custom_components` in this repository,
+and place it inside your Home Assistant Core installation's `custom_components` directory.
+
+`Note`: If installing manually, in order to be alerted about new releases, you will need to subscribe to releases from this repository. 
+
+## Setup
+
+Click on the button below to add the integration:
+
 [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=cielo_home)
 
-#OR
+Alternatively, follow the steps below:
 
-1. Install [HACS](https://hacs.xyz/)
-2. Go to HACS "Integrations >" section
-3. Click 3 dots in top right
-4. Click "Custom repositories"
-5. Add repository https://github.com/bodyscape/cielo_home with category `Integration`
-6. In the lower right click "+ Explore & Download repositories"
-7. Search for "Cielo Home" and add it
-8. In the Home Assistant (HA) UI go to "Configuration"
-9. Click "Integrations"
-10. Click "+ Add Integration"
-11. Search for "Cielo Home"
-
-### Manual
-
-1. Using the tool of choice open the directory (folder) for your [HA configuration](https://www.home-assistant.io/docs/configuration/) (where you find `configuration.yaml`).
-2. If you do not have a `custom_components` directory (folder) there, you need to create it.
-3. In the `custom_components` directory (folder) create a new folder called `cielo_home`.
-4. Download _all_ the files from the `custom_components/cielo_home/` directory (folder) in this repository.
-5. Place the files you downloaded in the new directory (folder) you created.
-6. Restart Home Assistant
-7. In the Home Assistant (HA) UI go to "Configuration"
-8. Click "Integrations"
-9. Click "+ Add Integration"
-10. Search for "Cielo Home"
+1. Install this integration.
+2. Navigate to the Home Assistant Integrations page (Settings --> Devices & Services)
+3. Click the `+ ADD INTEGRATION` button in the lower right-hand corner
+4. Search for `Cielo`
