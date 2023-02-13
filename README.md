@@ -50,8 +50,12 @@ Click on the button below to automatically navigate to the repository within HAC
 
 Alternatively, follow the steps below:
 
-1. Click on the `Explore & Download Repositories` button and search for Cielo.
-2. On the Cielo page, click on the `Download` button.
+1. Go to HACS "Integrations >" section
+2. Click 3 dots in top right
+3. Click "Custom repositories"
+4. Add repository https://github.com/bodyscape/cielo_home with category Integration
+5. In the lower right click "+ Explore & Download repositories"
+6. Search for "Cielo Home" and add it
 
 ## Manual
 Copy the `cielo_home` directory, from `custom_components` in this repository,
