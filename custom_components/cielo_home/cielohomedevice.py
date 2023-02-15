@@ -334,18 +334,27 @@ class CieloHomeDevice:
 
     def _get_action(self) -> object:
         """c"""
-        return {
+        action = {
             "power": self._device["latestAction"]["power"],
             "mode": self._device["latestAction"]["mode"],
             "fanspeed": self._device["latestAction"]["fanspeed"],
             "temp": self._device["latestAction"]["temp"],
             "swing": self._device["latestAction"]["swing"],
             "turbo": self._device["latestAction"]["turbo"],
-            "light": "off"
-            if self._device["latestAction"]["light"] == "on/off"
-            else self._device["latestAction"]["light"],
+            "light": "off",
             "oldPower": self._device["latestAction"]["power"],
         }
+
+        try:
+            action["light"] = (
+                "off"
+                if self._device["latestAction"]["light"] == "on/off"
+                else self._device["latestAction"]["light"]
+            )
+        except KeyError:
+            pass
+
+        return action
 
     def get_fan_modes(self) -> list[str]:
         """c"""
