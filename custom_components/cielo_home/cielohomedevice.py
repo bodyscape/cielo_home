@@ -124,14 +124,13 @@ class CieloHomeDevice:
         if self._device["latestAction"]["mode"] == value and self.get_power() == "on":
             return
 
-        action = self._get_action()
-
         if self.get_power() == "off":
-            action["power"] = "on"
+            self.send_power_on()
+
+        action = self._get_action()
 
         action["mode"] = value
         self._device["latestAction"]["mode"] = value
-        self._device["latestAction"]["power"] = "on"
         self._send_msg(action, "mode", action["mode"])
 
     def send_fan_speed_medium(self) -> None:
@@ -341,7 +340,6 @@ class CieloHomeDevice:
             "temp": self._device["latestAction"]["temp"],
             "swing": self._device["latestAction"]["swing"],
             "turbo": self._device["latestAction"]["turbo"],
-            "light": "off",
             "oldPower": self._device["latestAction"]["power"],
         }
 
@@ -625,10 +623,14 @@ class CieloHomeDevice:
             self._device["latestAction"]["turbo"] = data["action"]["turbo"]
             self._device["latestAction"]["mode"] = data["action"]["mode"]
             self._device["latestAction"]["swing"] = data["action"]["swing"]
-            self._device["latestAction"]["light"] = data["action"]["light"]
             self._device["latestAction"]["power"] = data["action"]["power"]
 
-            self.dispatch_state_updated()
+        try:
+            self._device["latestAction"]["light"] = data["action"]["light"]
+        except KeyError:
+            pass
+
+        self.dispatch_state_updated()
 
     def state_device_receive(self, device_state):
         """c"""

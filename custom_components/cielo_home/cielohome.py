@@ -4,6 +4,7 @@ import copy
 from datetime import datetime
 import json
 import logging
+import pathlib
 import sys
 from threading import Lock, Timer
 
@@ -132,7 +133,7 @@ class CieloHome:
                         self._access_token = repjson["data"]["accessToken"]
                         self._refresh_token = repjson["data"]["refreshToken"]
                         self._last_refresh_token_ts = self.get_ts()
-                        self._is_running = False
+                        # self._is_running = False
                         _LOGGER.debug("Call refreshToken success")
 
     async def async_connect_wss(self, update_state: bool = False):
@@ -180,7 +181,7 @@ class CieloHome:
                                 WSMsgType.CLOSED,
                                 WSMsgType.CLOSING,
                             ):
-                                _LOGGER.error("Websocket closed : %s", msg.type)
+                                _LOGGER.warning("Websocket closed : %s", msg.type)
                                 break
 
                             try:
@@ -237,7 +238,7 @@ class CieloHome:
             await self._websocket.close()
 
         if not self._stop_running:
-            _LOGGER.warning("Try reconnection in 5 secondes")
+            _LOGGER.info("Try reconnection in 5 secondes")
             for listener in self.__event_listener:
                 listener.lost_connection()
             await asyncio.sleep(5)
@@ -313,7 +314,7 @@ class CieloHome:
     async def async_get_thermostats(self):
         """Get de the list Devices/Thermostats."""
 
-        # # Opening JSON file
+        # Opening JSON file
         # fullpath: str = str(pathlib.Path(__file__).parent.resolve()) + "/devices.json"
         # file = open(fullpath)
 
