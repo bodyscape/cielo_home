@@ -4,7 +4,7 @@ import copy
 from datetime import datetime
 import json
 import logging
-import pathlib
+import sys
 from threading import Lock, Timer
 
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
@@ -135,7 +135,7 @@ class CieloHome:
                         self._is_running = False
                         _LOGGER.debug("Call refreshToken success")
 
-    async def async_connect_wss(self):
+    async def async_connect_wss(self, update_state: bool = False):
         """c"""
         headers_wss = {
             "host": URL_API_WSS,
@@ -165,8 +165,11 @@ class CieloHome:
                     wss_uri, headers=headers_wss
                 ) as websocket:
                     self._websocket = websocket
+                    _LOGGER.info("Connected success")
 
-                    # await prompt_and_send(ws, access_token, session_id)
+                    if update_state:
+                        asyncio.create_task(self.update_state_device())
+
                     self._last_refresh_token_ts = self.get_ts()
                     self.start_timer_ping()
                     while self._is_running:
@@ -226,15 +229,19 @@ class CieloHome:
 
                         await asyncio.sleep(0.1)
         except Exception:
-            _LOGGER.error("Websocket error, try reconnecting")
+            _LOGGER.error(sys.exc_info()[1])
             self._last_refresh_token_ts = self.get_ts() - 1200
 
-        if not self._websocket.closed:
+        if hasattr(self, "_websocket") and not self._websocket.closed:
             self._timer_ping.cancel()
             await self._websocket.close()
 
         if not self._stop_running:
-            await self.async_connect_wss()
+            _LOGGER.warning("Try reconnection in 5 secondes")
+            for listener in self.__event_listener:
+                listener.lost_connection()
+            await asyncio.sleep(5)
+            asyncio.create_task(self.async_connect_wss(True))
 
     def send_action(self, msg) -> None:
         """c"""
@@ -266,6 +273,43 @@ class CieloHome:
         """c"""
         return int((datetime.utcnow() - datetime.fromtimestamp(0)).total_seconds())
 
+    async def async_get_devices(self):
+        """c"""
+        devices = await self.async_get_thermostats()
+
+        appliance_ids = ""
+        if devices is not None:
+            for device in devices:
+                appliance_id: str = str(device["applianceId"])
+                if appliance_id in appliance_ids:
+                    continue
+
+                if appliance_ids != "":
+                    appliance_ids = appliance_ids + ","
+
+                appliance_ids = appliance_ids + str(appliance_id)
+
+            appliances = await self.async_get_thermostat_info(appliance_ids)
+            appliance_ids = ""
+            if _LOGGER.isEnabledFor(logging.DEBUG):
+                _LOGGER.debug("appliances : %s", json.dumps(appliances))
+            for device in devices:
+                for appliance in appliances:
+                    if appliance["applianceId"] == device["applianceId"]:
+                        device["appliance"] = appliance
+
+            return devices
+
+        return []
+
+    async def update_state_device(self):
+        """c"""
+        devices = await self.async_get_thermostats()
+        for listener in self.__event_listener:
+            for device in devices:
+                if device["macAddress"] == listener.get_mac_address():
+                    listener.state_device_receive(device)
+
     async def async_get_thermostats(self):
         """Get de the list Devices/Thermostats."""
 
@@ -284,7 +328,6 @@ class CieloHome:
         # file.close()
 
         self._headers["authorization"] = self._access_token
-        appliance_ids = ""
         devices = None
         async with ClientSession() as session:
             async with session.get(
@@ -293,34 +336,12 @@ class CieloHome:
             ) as response:
                 if response.status == 200:
                     repjson = await response.json()
-                    appliance_ids = ""
                     if repjson["status"] == 200 and repjson["message"] == "SUCCESS":
                         devices = repjson["data"]["listDevices"]
                 else:
                     pass
 
-        if devices is not None:
-            for device in devices:
-                appliance_id: str = str(device["applianceId"])
-                if appliance_id in appliance_ids:
-                    continue
-
-                if appliance_ids != "":
-                    appliance_ids = appliance_ids + ","
-
-                appliance_ids = appliance_ids + str(appliance_id)
-
-            appliances = await self.async_get_thermostat_info(appliance_ids)
-            if _LOGGER.isEnabledFor(logging.DEBUG):
-                _LOGGER.debug("appliances : %s", json.dumps(appliances))
-            for device in devices:
-                for appliance in appliances:
-                    if appliance["applianceId"] == device["applianceId"]:
-                        device["appliance"] = appliance
-
-            return devices
-
-        return []
+        return devices
 
     async def async_get_thermostat_info(self, appliance_ids):
         """Get de the list Devices/Thermostats."""

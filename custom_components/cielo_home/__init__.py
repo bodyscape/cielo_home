@@ -45,7 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = api
 
-    list_devices = await api.async_get_thermostats()
+    list_devices = await api.async_get_devices()
     cw_devices: list[CieloHomeDevice] = []
 
     for device in list_devices:

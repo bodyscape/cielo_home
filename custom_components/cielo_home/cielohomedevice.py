@@ -628,5 +628,20 @@ class CieloHomeDevice:
             self._device["latestAction"]["light"] = data["action"]["light"]
             self._device["latestAction"]["power"] = data["action"]["power"]
 
-            for listener in self.__event_listener:
-                listener.state_updated(data)
+            self.dispatch_state_updated()
+
+    def state_device_receive(self, device_state):
+        """c"""
+        device_state["appliance"] = self._device["appliance"]
+        self._device = device_state
+        self.dispatch_state_updated()
+
+    def dispatch_state_updated(self):
+        """c"""
+        for listener in self.__event_listener:
+            listener.state_updated()
+
+    def lost_connection(self):
+        """c"""
+        self._device["deviceStatus"] = 0
+        self.dispatch_state_updated()
