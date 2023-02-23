@@ -75,7 +75,7 @@ class CieloHome:
             "x-api-key": "7xTAU4y4B34u8DjMsODlEyprRRQEsbJ3IB7vZie4",
         }
 
-        _LOGGER.debug("Call refreshToken")
+        _LOGGER.debug("Call Auth")
         async with ClientSession() as session:
             async with session.post(
                 "https://" + URL_API + "/web/login",
@@ -292,8 +292,7 @@ class CieloHome:
 
             appliances = await self.async_get_thermostat_info(appliance_ids)
             appliance_ids = ""
-            if _LOGGER.isEnabledFor(logging.DEBUG):
-                _LOGGER.debug("appliances : %s", json.dumps(appliances))
+
             for device in devices:
                 for appliance in appliances:
                     if appliance["applianceId"] == device["applianceId"]:
@@ -339,6 +338,8 @@ class CieloHome:
                     repjson = await response.json()
                     if repjson["status"] == 200 and repjson["message"] == "SUCCESS":
                         devices = repjson["data"]["listDevices"]
+                        if _LOGGER.isEnabledFor(logging.DEBUG):
+                            _LOGGER.debug("devices : %s", json.dumps(devices))
                 else:
                     pass
 
@@ -360,7 +361,10 @@ class CieloHome:
                 if response.status == 200:
                     repjson = await response.json()
                     if repjson["status"] == 200 and repjson["message"] == "SUCCESS":
-                        return repjson["data"]["listAppliances"]
+                        appliances = repjson["data"]["listAppliances"]
+                        if _LOGGER.isEnabledFor(logging.DEBUG):
+                            _LOGGER.debug("appliances : %s", json.dumps(appliances))
+                        return appliances
                 else:
                     pass
         return []

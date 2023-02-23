@@ -121,11 +121,11 @@ class CieloHomeDevice:
 
     def _send_mode(self, value) -> None:
         """c"""
-        if self._device["latestAction"]["mode"] == value and self.get_power() == "on":
-            return
-
         if self.get_power() == "off":
             self.send_power_on()
+
+        if self._device["latestAction"]["mode"] == value:
+            return
 
         action = self._get_action()
 
@@ -249,7 +249,12 @@ class CieloHomeDevice:
 
     def get_is_turbo_mode(self) -> bool:
         """c"""
-        return self._device["appliance"]["turbo"] != ""
+        try:
+            return self._device["appliance"]["turbo"] != ""
+        except KeyError:
+            pass
+
+        return False
 
     def get_is_followme_mode(self) -> bool:
         """c"""
@@ -313,7 +318,12 @@ class CieloHomeDevice:
 
     def get_turbo(self) -> str:
         """c"""
-        return self._device["latestAction"]["turbo"]
+        try:
+            return self._device["latestAction"]["turbo"]
+        except KeyError:
+            pass
+
+        return "off"
 
     def get_fanspeed(self) -> str:
         """c"""
@@ -339,9 +349,13 @@ class CieloHomeDevice:
             "fanspeed": self._device["latestAction"]["fanspeed"],
             "temp": self._device["latestAction"]["temp"],
             "swing": self._device["latestAction"]["swing"],
-            "turbo": self._device["latestAction"]["turbo"],
             "oldPower": self._device["latestAction"]["power"],
         }
+
+        try:
+            action["turbo"] = self._device["latestAction"]["turbo"]
+        except KeyError:
+            pass
 
         try:
             action["light"] = (
@@ -620,10 +634,14 @@ class CieloHomeDevice:
             self._device["deviceStatus"] = data["device_status"]
             self._device["latestAction"]["temp"] = data["action"]["temp"]
             self._device["latestAction"]["fanspeed"] = data["action"]["fanspeed"]
-            self._device["latestAction"]["turbo"] = data["action"]["turbo"]
             self._device["latestAction"]["mode"] = data["action"]["mode"]
             self._device["latestAction"]["swing"] = data["action"]["swing"]
             self._device["latestAction"]["power"] = data["action"]["power"]
+
+        try:
+            self._device["latestAction"]["turbo"] = data["action"]["turbo"]
+        except KeyError:
+            pass
 
         try:
             self._device["latestAction"]["light"] = data["action"]["light"]
