@@ -36,6 +36,7 @@ class CieloHome:
         self._timer_refresh: Timer
         self._timer_ping: Timer
         self._last_refresh_token_ts: int
+        self._last_ts_msg: int = 0
 
     async def close(self):
         """c"""
@@ -223,7 +224,7 @@ class CieloHome:
                         except Exception:
                             _LOGGER.error("Failed to send Json")
                             if msg is not None:
-                                self._msg_to_send.append(msg)
+                                self._msg_to_send.insert(0, msg)
                         finally:
                             if msg_sent:
                                 self._msg_lock.release()
@@ -250,6 +251,12 @@ class CieloHome:
         msg["mid"] = self._session_id
         msg["ts"] = self.get_ts()
 
+        # to be sure each msg have different ts, when 2 msg are send quickly
+        if msg["ts"] == self._last_ts_msg:
+            msg["ts"] = msg["ts"] + 1
+
+        self._last_ts_msg = msg["ts"]
+
         self.send_json(msg)
 
     def start_timer_ping(self):
@@ -267,8 +274,10 @@ class CieloHome:
     def send_json(self, data):
         """c"""
         self._msg_lock.acquire()
-        self._msg_to_send.append(data)
-        self._msg_lock.release()
+        try:
+            self._msg_to_send.append(data)
+        finally:
+            self._msg_lock.release()
 
     def get_ts(self) -> int:
         """c"""
