@@ -88,7 +88,7 @@ class CieloHomeDevice:
             "applianceId": self.get_appliance_id(),
             "actionType": action_type,
             "actionValue": action_value,
-            "connection_source": 0,
+            "connection_source": (1 if self.get_device_type_version() == "BL02" else 0),
             "token": "",
             "mid": "",
             "application_version": "1.0.0",
