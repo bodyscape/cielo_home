@@ -1,25 +1,12 @@
 {
-<<<<<<< HEAD
-=======
-  "domain": "cielo_home",
-  "name": "Cielo Home",
-  "config_flow": true,
-  "documentation": "https://github.com/bodyscape/cielo_home",
-  "issue_tracker": "https://github.com/bodyscape/cielo_home/issues",
-  "requirements": [],
-  "dependencies": [],
->>>>>>> 001e8ac4b36647bd541d320da7ea2f95d4a9bd62
   "codeowners": ["@bodyscape"],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/bodyscape/cielo_home",
   "domain": "cielo_home",
   "iot_class": "cloud_push",
-<<<<<<< HEAD
   "issue_tracker": "https://github.com/bodyscape/cielo_home/issues",
   "name": "Cielo Home",
   "requirements": [],
-=======
->>>>>>> 001e8ac4b36647bd541d320da7ea2f95d4a9bd62
   "version": "1.3.6"
 }
