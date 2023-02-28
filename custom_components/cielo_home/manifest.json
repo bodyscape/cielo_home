@@ -6,8 +6,6 @@
   "issue_tracker": "https://github.com/bodyscape/cielo_home/issues",
   "requirements": [],
   "ssdp": [],
-  "zeroconf": [],
-  "homekit": {},
   "dependencies": [],
   "codeowners": ["@bodyscape"],
   "iot_class": "cloud_push",
