@@ -59,6 +59,24 @@ class CieloHomeDevice:
         self._device["latestAction"]["power"] = value
         self._send_msg(action, "power", action["power"])
 
+    def send_light_on(self) -> None:
+        """c"""
+        self._send_light("on")
+
+    def send_light_off(self) -> None:
+        """c"""
+        self._send_light("off")
+
+    def _send_light(self, value) -> None:
+        """c"""
+        if self._device["latestAction"]["light"] == value:
+            return
+
+        action = self._get_action()
+        action["light"] = value
+        self._device["latestAction"]["light"] = value
+        self._send_msg(action, "light", "on/off")
+
     def send_turbo_on(self) -> None:
         """c"""
         self._send_turbo("on")
@@ -247,6 +265,13 @@ class CieloHomeDevice:
         """c"""
         return self._device["appliance"]["swing"]
 
+    def get_is_light_mode(self) -> bool:
+        """c"""
+        try:
+            return self._device["appliance"]["isDisplayLight"] == 1
+        except KeyError:
+            pass
+
     def get_is_turbo_mode(self) -> bool:
         """c"""
         try:
@@ -311,6 +336,19 @@ class CieloHomeDevice:
     def get_power(self) -> str:
         """c"""
         return self._device["latestAction"]["power"]
+
+    def get_light(self) -> str:
+        """c"""
+        try:
+            return (
+                "off"
+                if self._device["latestAction"]["light"] == "on/off"
+                else self._device["latestAction"]["light"]
+            )
+        except KeyError:
+            pass
+
+        return ""
 
     def get_target_temperature(self) -> float:
         """c"""
