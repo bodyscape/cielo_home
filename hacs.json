@@ -1,5 +1,4 @@
 {
   "name": "Cielo Home",
-  "iot_class": "cloud_push",
   "homeassistant": "2023.0.0"
 }
