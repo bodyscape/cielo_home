@@ -5,7 +5,6 @@
   "documentation": "https://github.com/bodyscape/cielo_home",
   "issue_tracker": "https://github.com/bodyscape/cielo_home/issues",
   "requirements": [],
-  "ssdp": [],
   "dependencies": [],
   "codeowners": ["@bodyscape"],
   "iot_class": "cloud_push",
