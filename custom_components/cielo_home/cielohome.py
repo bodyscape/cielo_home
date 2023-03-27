@@ -73,7 +73,7 @@ class CieloHome:
             "referer": URL_CIELO,
             "origin": URL_CIELO,
             "user-agent": "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
-            "x-api-key": "7xTAU4y4B34u8DjMsODlEyprRRQEsbJ3IB7vZie4",
+            "x-api-key": "7EORvce3Cm80izjdODnGSafHYggxGSKw7U23BVzi",
         }
 
         _LOGGER.debug("Call Auth")
