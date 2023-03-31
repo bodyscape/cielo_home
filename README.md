@@ -11,7 +11,7 @@ A HomeAssistant custom integration to control Cielo Home devices.
 
 ## Functionality
 
-![image](https://user-images.githubusercontent.com/30115568/217594793-e3009fee-bd3d-47aa-8638-dfc5af8b4e92.png)
+![image](https://user-images.githubusercontent.com/30115568/229196023-6d2923fa-a09d-4e03-8615-78060a2003d6.png)
 
 A exemple of thermostat card i use : https://github.com/nervetattoo/simple-thermostat
 
