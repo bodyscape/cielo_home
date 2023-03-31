@@ -13,6 +13,12 @@ A HomeAssistant custom integration to control Cielo Home devices.
 
 ![image](https://user-images.githubusercontent.com/30115568/229196023-6d2923fa-a09d-4e03-8615-78060a2003d6.png)
 
+
+You can call the Cielo Sync AC State as a HA service.
+
+![image](https://user-images.githubusercontent.com/30115568/229196301-bd5a07f6-7ede-411b-82c1-6c1d0ccc6e2e.png)
+
+
 A exemple of thermostat card i use : https://github.com/nervetattoo/simple-thermostat
 
 ![image](https://user-images.githubusercontent.com/30115568/218138232-3249b15e-ce08-4eee-bbeb-178d7e150caa.png)
