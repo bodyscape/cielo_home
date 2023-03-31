@@ -2,7 +2,10 @@
 import logging
 from typing import Any
 
+import voluptuous as vol
+
 from homeassistant.components.climate import (
+    HVAC_MODES,
     ClimateEntity,
     ClimateEntityFeature,
     HVACMode,
@@ -10,10 +13,26 @@ from homeassistant.components.climate import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .cielohomedevice import CieloHomeDevice
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    FAN_AUTO_VALUE,
+    FAN_HIGH_VALUE,
+    FAN_LOW_VALUE,
+    FAN_MEDIUM_VALUE,
+    SWING_ADJUST_VALUE,
+    SWING_AUTO_STOP_VALUE,
+    SWING_AUTO_VALUE,
+    SWING_POSITION1_VALUE,
+    SWING_POSITION2_VALUE,
+    SWING_POSITION3_VALUE,
+    SWING_POSITION4_VALUE,
+    SWING_POSITION5_VALUE,
+    SWING_POSITION6_VALUE,
+)
 from .entity import CieloHomeEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -29,6 +48,32 @@ async def async_setup_entry(
     for device in cw_devices:
         entity = CieloHomeThermostat(device)
         async_add_entities([entity], True)
+
+    platform = entity_platform.async_get_current_platform()
+
+    list_fan_speed = [FAN_AUTO_VALUE, FAN_LOW_VALUE, FAN_MEDIUM_VALUE, FAN_HIGH_VALUE]
+    list_swing = [
+        SWING_AUTO_VALUE,
+        SWING_ADJUST_VALUE,
+        SWING_AUTO_STOP_VALUE,
+        SWING_POSITION1_VALUE,
+        SWING_POSITION2_VALUE,
+        SWING_POSITION3_VALUE,
+        SWING_POSITION4_VALUE,
+        SWING_POSITION5_VALUE,
+        SWING_POSITION6_VALUE,
+    ]
+    platform.async_register_entity_service(
+        "sync_ac_state",
+        {
+            vol.Required("power", default=False): cv.boolean,
+            vol.Optional("temp"): vol.Coerce(int),
+            vol.Optional("mode"): vol.All(vol.In(HVAC_MODES)),
+            vol.Optional("fan_speed"): vol.All(vol.In(list_fan_speed)),
+            vol.Optional("swing"): vol.All(vol.In(list_swing)),
+        },
+        "async_sync_ac_state",
+    )
 
 
 class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
@@ -84,6 +129,17 @@ class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
 
         self._device.send_temperature(temp)
         self._update_internal_state()
+
+    async def async_sync_ac_state(
+        self,
+        power: bool,
+        temp: int = 0,
+        mode: str = "",
+        fan_speed: str = "",
+        swing: str = "",
+    ) -> None:
+        """sync_ac_state"""
+        self._device.sync_ac_state(power, temp, mode, fan_speed, swing)
 
     def set_swing_mode(self, swing_mode: str) -> None:
         """Set new target swing operation."""

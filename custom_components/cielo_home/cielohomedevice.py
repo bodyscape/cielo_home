@@ -7,21 +7,34 @@ from homeassistant.const import UnitOfTemperature
 from .cielohome import CieloHome
 from .const import (
     FAN_AUTO,
+    FAN_AUTO_VALUE,
     FAN_HIGH,
+    FAN_HIGH_VALUE,
     FAN_LOW,
+    FAN_LOW_VALUE,
     FAN_MEDIUM,
+    FAN_MEDIUM_VALUE,
     PRESET_MODES,
     PRESET_NONE,
     PRESET_TURBO,
     SWING_ADJUST,
+    SWING_ADJUST_VALUE,
     SWING_AUTO,
     SWING_AUTO_STOP,
+    SWING_AUTO_STOP_VALUE,
+    SWING_AUTO_VALUE,
     SWING_POSITION1,
+    SWING_POSITION1_VALUE,
     SWING_POSITION2,
+    SWING_POSITION2_VALUE,
     SWING_POSITION3,
+    SWING_POSITION3_VALUE,
     SWING_POSITION4,
+    SWING_POSITION4_VALUE,
     SWING_POSITION5,
+    SWING_POSITION5_VALUE,
     SWING_POSITION6,
+    SWING_POSITION6_VALUE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -59,6 +72,27 @@ class CieloHomeDevice:
         self._device["latestAction"]["power"] = value
         self._send_msg(action, "power", action["power"])
 
+    def sync_ac_state(
+        self, power: bool, temp: int, mode: str, fan_speed: str, swing: str
+    ) -> None:
+        """c"""
+        action = {
+            "power": "on" if power else "off",
+            "temp": temp
+            if power and temp > 0
+            else self._device["latestAction"]["temp"],
+            "mode": mode
+            if power and mode != ""
+            else self._device["latestAction"]["mode"],
+            "fanspeed": fan_speed
+            if power and fan_speed != ""
+            else self._device["latestAction"]["fanspeed"],
+            "swing": swing
+            if power and swing != ""
+            else self._device["latestAction"]["swing"],
+        }
+        self._send_msg(action, "", "", default_action="syncState")
+
     def send_light_on(self) -> None:
         """c"""
         self._send_light("on")
@@ -69,8 +103,8 @@ class CieloHomeDevice:
 
     def _send_light(self, value) -> None:
         """c"""
-        if self._device["latestAction"]["light"] == value:
-            return
+        # if self._device["latestAction"]["light"] == value:
+        #     return
 
         action = self._get_action()
         action["light"] = value
@@ -95,17 +129,18 @@ class CieloHomeDevice:
         self._device["latestAction"]["turbo"] = value
         self._send_msg(action, "turbo", "on/off")
 
-    def _send_msg(self, action, action_type, action_value) -> None:
+    def _send_msg(
+        self, action, action_type, action_value, default_action="actionControl"
+    ) -> None:
+
         msg = {
-            "action": "actionControl",
+            "action": default_action,
             "macAddress": self.get_mac_address(),
             "deviceTypeVersion": self.get_device_type_version(),
             "fwVersion": self.get_fw_version(),
             "actionSource": "WEB",
             "applianceType": self.get_appliance_type(),
             "applianceId": self.get_appliance_id(),
-            "actionType": action_type,
-            "actionValue": action_value,
             "connection_source": (1 if self.get_device_type_version() == "BL02" else 0),
             "token": "",
             "mid": "",
@@ -113,6 +148,10 @@ class CieloHomeDevice:
             "ts": 0,
             "actions": action,
         }
+
+        if default_action == "actionControl":
+            msg["actionType"] = action_type
+            msg["actionValue"] = action_value
 
         self._api.send_action(msg)
         # self._api.send_action(msg)
@@ -153,19 +192,19 @@ class CieloHomeDevice:
 
     def send_fan_speed_medium(self) -> None:
         """c"""
-        self._send_fan_speed("medium")
+        self._send_fan_speed(FAN_MEDIUM_VALUE)
 
     def send_fan_speed_high(self) -> None:
         """c"""
-        self._send_fan_speed("high")
+        self._send_fan_speed(FAN_HIGH_VALUE)
 
     def send_fan_speed_low(self) -> None:
         """c"""
-        self._send_fan_speed("low")
+        self._send_fan_speed(FAN_LOW_VALUE)
 
     def send_fan_speed_auto(self) -> None:
         """c"""
-        self._send_fan_speed("auto")
+        self._send_fan_speed(FAN_AUTO_VALUE)
 
     def _send_fan_speed(self, value) -> None:
         """c"""
@@ -179,39 +218,39 @@ class CieloHomeDevice:
 
     def send_swing_adjust(self) -> None:
         """c"""
-        self._send_swing("adjust")
+        self._send_swing(SWING_ADJUST_VALUE)
 
     def send_swing_auto(self) -> None:
         """c"""
-        self._send_swing("auto")
+        self._send_swing(SWING_AUTO_VALUE)
 
     def send_swing_auto_stop(self) -> None:
         """c"""
-        self._send_swing("auto/stop")
+        self._send_swing(SWING_AUTO_STOP_VALUE)
 
     def send_swing_pos1(self) -> None:
         """c"""
-        self._send_swing("pos1")
+        self._send_swing(SWING_POSITION1_VALUE)
 
     def send_swing_pos2(self) -> None:
         """c"""
-        self._send_swing("pos2")
+        self._send_swing(SWING_POSITION2_VALUE)
 
     def send_swing_pos3(self) -> None:
         """c"""
-        self._send_swing("pos3")
+        self._send_swing(SWING_POSITION3_VALUE)
 
     def send_swing_pos4(self) -> None:
         """c"""
-        self._send_swing("pos4")
+        self._send_swing(SWING_POSITION4_VALUE)
 
     def send_swing_pos5(self) -> None:
         """c"""
-        self._send_swing("pos5")
+        self._send_swing(SWING_POSITION5_VALUE)
 
     def send_swing_pos6(self) -> None:
         """c"""
-        self._send_swing("pos6")
+        self._send_swing(SWING_POSITION6_VALUE)
 
     def _send_swing(self, value) -> None:
         """c"""

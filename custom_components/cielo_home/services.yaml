@@ -1,0 +1,121 @@
+# Service ID
+sync_ac_state:
+  # Service name as shown in UI
+  name: Sync AC State
+  # Description of the service
+  description: Sync AC State
+  # If the service accepts entity IDs, target allows the user to specify entities by entity, device, or area. If `target` is specified, `entity_id` should not be defined in the `fields` map. By default it shows only targets matching entities from the same domain as the service, but if further customization is required, target supports the entity, device, and area selectors (https://www.home-assistant.io/docs/blueprint/selectors/). Entity selector parameters will automatically be applied to device and area, and device selector parameters will automatically be applied to area.
+  target:
+  # Different fields that your service accepts
+  fields:
+    # Key of the field
+    power:
+      # Field name as shown in UI
+      name: Power
+      # Description of the field
+      description: Power setting
+      # Whether or not field is required (default = false)
+      required: true
+      # Advanced fields are only shown when the advanced mode is enabled for the user (default = false)
+      advanced: false
+      # Example value that can be passed for this field
+      example: true
+      # The default field value
+      default: true
+      # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
+      selector:
+        select:
+          options:
+            - true
+            - false
+    # Key of the field
+    temp:
+      # Field name as shown in UI
+      name: Temperature
+      # Description of the field
+      description: Temperature setting
+      # Whether or not field is required (default = false)
+      required: false
+      # Advanced fields are only shown when the advanced mode is enabled for the user (default = false)
+      advanced: false
+      # Example value that can be passed for this field
+      example: 25
+      # The default field value
+      default: 25
+      # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
+      selector:
+        number:
+          min: 0
+          max: 100
+    # Key of the field
+    mode:
+      # Field name as shown in UI
+      name: HVAC Mode
+      # Description of the field
+      description: HVAC Mode setting
+      # Whether or not field is required (default = false)
+      required: false
+      # Advanced fields are only shown when the advanced mode is enabled for the user (default = false)
+      advanced: false
+      # Example value that can be passed for this field
+      example: ""
+      # The default field value
+      default: "auto"
+      # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
+      selector:
+        select:
+          options:
+            - "heat"
+            - "cool"
+            - "auto"
+            - "dry"
+            - "fan"
+    # Key of the field
+    fan_speed:
+      # Field name as shown in UI
+      name: Fan Speed
+      # Description of the field
+      description: Fan Speed setting
+      # Whether or not field is required (default = false)
+      required: false
+      # Advanced fields are only shown when the advanced mode is enabled for the user (default = false)
+      advanced: false
+      # Example value that can be passed for this field
+      example: "auto"
+      # The default field value
+      default: "auto"
+      # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
+      selector:
+        select:
+          options:
+            - "auto"
+            - "low"
+            - "medium"
+            - "high"
+    # Key of the field
+    swing:
+      # Field name as shown in UI
+      name: Fan Swing
+      # Description of the field
+      description: Fan Swing setting
+      # Whether or not field is required (default = false)
+      required: false
+      # Advanced fields are only shown when the advanced mode is enabled for the user (default = false)
+      advanced: false
+      # Example value that can be passed for this field
+      example: "auto"
+      # The default field value
+      default: "auto"
+      # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
+      selector:
+        select:
+          options:
+            - "auto"
+            - "adjust"
+            - "auto/stop"
+            - "pos1"
+            - "pos2"
+            - "pos3"
+            - "pos4"
+            - "pos5"
+            - "pos6"

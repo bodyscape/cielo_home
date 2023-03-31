@@ -9,6 +9,7 @@ import sys
 from threading import Lock, Timer
 
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
+import requests
 
 from .const import URL_API, URL_API_WSS, URL_CIELO
 
@@ -37,6 +38,7 @@ class CieloHome:
         self._timer_ping: Timer
         self._last_refresh_token_ts: int
         self._last_ts_msg: int = 0
+        self._x_api_key: str = ""
 
     async def close(self):
         """c"""
@@ -52,6 +54,23 @@ class CieloHome:
         self, user_name: str, password: str, connect_ws: bool = False
     ) -> bool:
         """Set up Cielo Home auth."""
+        login_url = "https://home.cielowigle.com/"
+        main_js_url = ""
+        async with ClientSession() as session:
+            async with session.get(login_url + "auth/login") as resp:
+                html_text = await resp.text()
+                index = html_text.find('src="main.')
+                index2 = html_text.find('"', index + 5)
+                main_js_url = html_text[index + 5 : index2].replace('"', "")
+
+        if main_js_url != "":
+            async with ClientSession() as session:
+                async with session.get(login_url + main_js_url) as resp:
+                    html_text = await resp.text()
+                    index = html_text.find("apiKey:")
+                    index2 = html_text.find(",", index + 7)
+                    self._x_api_key = html_text[index + 7 : index2].replace('"', "")
+
         pload = {}
         pload["user"] = {
             "userId": user_name,
@@ -73,7 +92,7 @@ class CieloHome:
             "referer": URL_CIELO,
             "origin": URL_CIELO,
             "user-agent": "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
-            "x-api-key": "7EORvce3Cm80izjdODnGSafHYggxGSKw7U23BVzi",
+            "x-api-key": self._x_api_key,
         }
 
         _LOGGER.debug("Call Auth")

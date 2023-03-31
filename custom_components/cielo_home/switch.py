@@ -31,6 +31,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
+# i have no idea why, but call to turn on and off the light is inverted on the cielo app
 class CieloHomeSwitchPower(CieloHomeEntity, SwitchEntity):
     """Representation of a Bond generic device."""
 
@@ -56,26 +57,26 @@ class CieloHomeSwitchPower(CieloHomeEntity, SwitchEntity):
         self._attr_is_on = self._device.get_power() == "on"
 
 
-class CieloHomeSwitchLight(CieloHomeEntity, SwitchEntity):
-    """Representation of a Bond generic device."""
+# class CieloHomeSwitchLight(CieloHomeEntity, SwitchEntity):
+#     """Representation of a Bond generic device."""
 
-    def __init__(self, device: CieloHomeDevice, name, unique_id) -> None:
-        """c"""
-        super().__init__(device, device.get_name() + " " + name, unique_id)
-        self._attr_is_on = self._device.get_light() == "on"
-        self._attr_icon = "mdi:lightbulb"
-        self._device.add_listener(self)
+#     def __init__(self, device: CieloHomeDevice, name, unique_id) -> None:
+#         """c"""
+#         super().__init__(device, device.get_name() + " " + name, unique_id)
+#         self._attr_is_on = self._device.get_light() == "on"
+#         self._attr_icon = "mdi:lightbulb"
+#         self._device.add_listener(self)
 
-    def turn_on(self, **kwargs: Any) -> None:
-        """Turn the device on."""
-        self._device.send_light_on()
-        self._update_internal_state()
+#     def turn_on(self, **kwargs: Any) -> None:
+#         """Turn the device on."""
+#         self._device.send_light_on()
+#         self._update_internal_state()
 
-    def turn_off(self, **kwargs: Any) -> None:
-        """Turn the device off."""
-        self._device.send_light_off()
-        self._update_internal_state()
+#     def turn_off(self, **kwargs: Any) -> None:
+#         """Turn the device off."""
+#         self._device.send_light_off()
+#         self._update_internal_state()
 
-    def _update_internal_state(self):
-        """c"""
-        self._attr_is_on = self._device.get_light() == "on"
+#     def _update_internal_state(self):
+#         """c"""
+#         self._attr_is_on = self._device.get_light() == "on"
