@@ -24,10 +24,7 @@ sync_ac_state:
       default: true
       # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
       selector:
-        select:
-          options:
-            - true
-            - false
+        boolean:
     # Key of the field
     temp:
       # Field name as shown in UI
