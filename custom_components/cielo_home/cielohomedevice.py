@@ -1,5 +1,6 @@
 """The Cielo Home integration."""
 import logging
+from threading import Timer
 
 from homeassistant.components.climate import HVACMode
 from homeassistant.const import UnitOfTemperature
@@ -47,6 +48,7 @@ class CieloHomeDevice:
         """Set up Cielo Home device."""
         self._api = api
         self._device = device
+        self._timer_state_update: Timer = Timer(1, self.dispatch_state_updated)
         self.__event_listener: list[object] = []
         self._api.add_listener(self)
 
@@ -141,7 +143,7 @@ class CieloHomeDevice:
             "actionSource": "WEB",
             "applianceType": self.get_appliance_type(),
             "applianceId": self.get_appliance_id(),
-            "connection_source": (1 if self.get_device_type_version() == "BL02" else 0),
+            "connection_source": (3 if self.get_device_type_version() == "BL02" else 0),
             "token": "",
             "mid": "",
             "application_version": "1.0.0",
@@ -725,13 +727,22 @@ class CieloHomeDevice:
         except KeyError:
             pass
 
-        self.dispatch_state_updated()
+        self.dispatch_state_timer()
 
     def state_device_receive(self, device_state):
         """c"""
         device_state["appliance"] = self._device["appliance"]
         self._device = device_state
-        self.dispatch_state_updated()
+        self.dispatch_state_timer()
+
+    def dispatch_state_timer(self):
+        """c"""
+        if self._timer_state_update.is_alive():
+            self._timer_state_update.cancel()
+            self._timer_state_update.join()
+
+        self._timer_state_update = Timer(1, self.dispatch_state_updated)
+        self._timer_state_update.start()
 
     def dispatch_state_updated(self):
         """c"""
@@ -741,4 +752,4 @@ class CieloHomeDevice:
     def lost_connection(self):
         """c"""
         self._device["deviceStatus"] = 0
-        self.dispatch_state_updated()
+        self.dispatch_state_timer()
