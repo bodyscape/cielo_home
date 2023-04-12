@@ -143,7 +143,7 @@ class CieloHomeDevice:
             "actionSource": "WEB",
             "applianceType": self.get_appliance_type(),
             "applianceId": self.get_appliance_id(),
-            "connection_source": (3 if self.get_device_type_version() == "BL02" else 0),
+            "connection_source": self.get_connection_source(),
             "token": "",
             "mid": "",
             "application_version": "1.0.0",
@@ -361,6 +361,10 @@ class CieloHomeDevice:
     def get_appliance_id(self) -> int:
         """c"""
         return self._device["applianceId"]
+
+    def get_connection_source(self) -> int:
+        """c"""
+        return self._device["connectionSource"]
 
     def get_appliance_type(self) -> str:
         """c"""
