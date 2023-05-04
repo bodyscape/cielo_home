@@ -1,6 +1,6 @@
 """The Cielo Home integration."""
 import logging
-from threading import Timer
+from threading import Lock, Timer
 
 from homeassistant.components.climate import HVACMode
 from homeassistant.const import UnitOfTemperature
@@ -51,6 +51,7 @@ class CieloHomeDevice:
         self._timer_state_update: Timer = Timer(1, self.dispatch_state_updated)
         self.__event_listener: list[object] = []
         self._api.add_listener(self)
+        self._timer_lock = Lock()
 
     def add_listener(self, listener: object) -> None:
         """c"""
@@ -721,17 +722,17 @@ class CieloHomeDevice:
             self._device["latestAction"]["swing"] = data["action"]["swing"]
             self._device["latestAction"]["power"] = data["action"]["power"]
 
-        try:
-            self._device["latestAction"]["turbo"] = data["action"]["turbo"]
-        except KeyError:
-            pass
+            try:
+                self._device["latestAction"]["turbo"] = data["action"]["turbo"]
+            except KeyError:
+                pass
 
-        try:
-            self._device["latestAction"]["light"] = data["action"]["light"]
-        except KeyError:
-            pass
+            try:
+                self._device["latestAction"]["light"] = data["action"]["light"]
+            except KeyError:
+                pass
 
-        self.dispatch_state_timer()
+            self.dispatch_state_timer()
 
     def state_device_receive(self, device_state):
         """c"""
@@ -741,12 +742,13 @@ class CieloHomeDevice:
 
     def dispatch_state_timer(self):
         """c"""
+        self._timer_lock.acquire()
         if self._timer_state_update.is_alive():
             self._timer_state_update.cancel()
-            self._timer_state_update.join()
 
         self._timer_state_update = Timer(1, self.dispatch_state_updated)
         self._timer_state_update.start()
+        self._timer_lock.release()
 
     def dispatch_state_updated(self):
         """c"""
