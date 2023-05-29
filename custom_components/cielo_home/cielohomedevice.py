@@ -1,6 +1,7 @@
 """The Cielo Home integration."""
 import logging
 from threading import Lock, Timer
+import time
 
 from homeassistant.components.climate import HVACMode
 from homeassistant.const import UnitOfTemperature
@@ -179,19 +180,29 @@ class CieloHomeDevice:
         """c"""
         self._send_mode("fan")
 
+    def send_mode_freezepoint(self) -> None:
+        """c"""
+        if self.get_hvac_mode() != HVACMode.HEAT:
+            self.send_mode_heat()
+            time.sleep(2)
+
+        self._send_mode("freezepoint")
+
     def _send_mode(self, value) -> None:
         """c"""
         if self.get_power() == "off":
             self.send_power_on()
+            time.sleep(2)
 
-        if self._device["latestAction"]["mode"] == value:
+        if self._device["latestAction"]["mode"] == value and value != "freezepoint":
             return
 
         action = self._get_action()
 
-        action["mode"] = value
+        action["mode"] = value if value != "freezepoint" else "heat"
+        # action["mode"] = value
         self._device["latestAction"]["mode"] = value
-        self._send_msg(action, "mode", action["mode"])
+        self._send_msg(action, "mode", value)
 
     def send_fan_speed_medium(self) -> None:
         """c"""
@@ -306,6 +317,13 @@ class CieloHomeDevice:
     def get_available_swing_modes(self) -> str:
         """c"""
         return self._device["appliance"]["swing"]
+
+    def get_is_appliance_is_freezepoin_display(self) -> bool:
+        """c"""
+        try:
+            return self._device["appliance"]["isFreezepointDisplay"] == 1
+        except KeyError:
+            pass
 
     def get_is_light_mode(self) -> bool:
         """c"""
@@ -530,7 +548,7 @@ class CieloHomeDevice:
             return HVACMode.OFF
         elif self.get_mode() == "auto":
             return HVACMode.AUTO
-        elif self.get_mode() == "heat":
+        elif self.get_mode() == "heat" or self.get_mode() == "freezepoint":
             return HVACMode.HEAT
         elif self.get_mode() == "cool":
             return HVACMode.COOL
@@ -743,12 +761,14 @@ class CieloHomeDevice:
     def dispatch_state_timer(self):
         """c"""
         self._timer_lock.acquire()
-        if self._timer_state_update.is_alive():
-            self._timer_state_update.cancel()
+        try:
+            if self._timer_state_update.is_alive():
+                self._timer_state_update.cancel()
 
-        self._timer_state_update = Timer(1, self.dispatch_state_updated)
-        self._timer_state_update.start()
-        self._timer_lock.release()
+            self._timer_state_update = Timer(1, self.dispatch_state_updated)
+            self._timer_state_update.start()
+        finally:
+            self._timer_lock.release()
 
     def dispatch_state_updated(self):
         """c"""

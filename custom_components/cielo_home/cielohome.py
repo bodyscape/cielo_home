@@ -201,7 +201,7 @@ class CieloHome:
                                 WSMsgType.CLOSED,
                                 WSMsgType.CLOSING,
                             ):
-                                _LOGGER.warning("Websocket closed : %s", msg.type)
+                                _LOGGER.debug("Websocket closed : %s", msg.type)
                                 break
 
                             try:
@@ -226,20 +226,21 @@ class CieloHome:
 
                         msg_sent: bool = False
                         msg: object = None
+
+                        if len(self._msg_to_send) > 0:
+                            self._msg_lock.acquire()
+                            msg_sent = True
                         try:
-                            if len(self._msg_to_send) > 0:
-                                self._msg_lock.acquire()
-                                msg_sent = True
-                                while len(self._msg_to_send) > 0:
-                                    msg = self._msg_to_send.pop(0)
-                                    if _LOGGER.isEnabledFor(logging.DEBUG):
-                                        debug_data = copy.copy(msg)
-                                        debug_data["token"] = "*****"
-                                        _LOGGER.debug(
-                                            "Send Json : %s", json.dumps(debug_data)
-                                        )
-                                    await self._websocket.send_json(msg)
-                                    msg = None
+                            while len(self._msg_to_send) > 0:
+                                msg = self._msg_to_send.pop(0)
+                                if _LOGGER.isEnabledFor(logging.DEBUG):
+                                    debug_data = copy.copy(msg)
+                                    debug_data["token"] = "*****"
+                                    _LOGGER.debug(
+                                        "Send Json : %s", json.dumps(debug_data)
+                                    )
+                                await self._websocket.send_json(msg)
+                                msg = None
                         except Exception:
                             _LOGGER.error("Failed to send Json")
                             if msg is not None:
@@ -280,7 +281,7 @@ class CieloHome:
 
     def start_timer_ping(self):
         """c"""
-        self._timer_ping = Timer(550, self.send_ping)
+        self._timer_ping = Timer(588, self.send_ping)
         self._timer_ping.start()  # Here run is called
 
     def send_ping(self):
