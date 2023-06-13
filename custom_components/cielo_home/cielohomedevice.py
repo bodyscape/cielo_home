@@ -316,7 +316,17 @@ class CieloHomeDevice:
 
     def get_available_swing_modes(self) -> str:
         """c"""
-        return self._device["appliance"]["swing"]
+        try:
+            return self._device["appliance"]["swing"]
+        except KeyError:
+            pass
+
+    def get_is_available_swing_modes(self) -> bool:
+        """c"""
+        try:
+            return self._device["appliance"]["swing"] != ""
+        except KeyError:
+            pass
 
     def get_is_appliance_is_freezepoin_display(self) -> bool:
         """c"""
@@ -609,32 +619,33 @@ class CieloHomeDevice:
     def get_swing_modes(self) -> list[str]:
         """c"""
         modes = self.get_available_swing_modes()
-        modes_list = modes.split(":")
-        swing_modes: list = []
-        for mode in modes_list:
-            if mode == "auto/stop":
-                swing_modes.append(SWING_AUTO_STOP)
-            elif mode == "auto":
-                swing_modes.append(SWING_AUTO)
-            elif mode == "adjust":
-                swing_modes.append(SWING_ADJUST)
-            elif mode == "pos1":
-                swing_modes.append(SWING_POSITION1)
-            elif mode == "pos2":
-                swing_modes.append(SWING_POSITION2)
-            elif mode == "pos3":
-                swing_modes.append(SWING_POSITION3)
-            elif mode == "pos4":
-                swing_modes.append(SWING_POSITION4)
-            elif mode == "pos5":
-                swing_modes.append(SWING_POSITION5)
-            elif mode == "pos6":
-                swing_modes.append(SWING_POSITION6)
-            else:
-                pass
+        if modes is not None:
+            modes_list = modes.split(":")
+            swing_modes: list = []
+            for mode in modes_list:
+                if mode == "auto/stop":
+                    swing_modes.append(SWING_AUTO_STOP)
+                elif mode == "auto":
+                    swing_modes.append(SWING_AUTO)
+                elif mode == "adjust":
+                    swing_modes.append(SWING_ADJUST)
+                elif mode == "pos1":
+                    swing_modes.append(SWING_POSITION1)
+                elif mode == "pos2":
+                    swing_modes.append(SWING_POSITION2)
+                elif mode == "pos3":
+                    swing_modes.append(SWING_POSITION3)
+                elif mode == "pos4":
+                    swing_modes.append(SWING_POSITION4)
+                elif mode == "pos5":
+                    swing_modes.append(SWING_POSITION5)
+                elif mode == "pos6":
+                    swing_modes.append(SWING_POSITION6)
+                else:
+                    pass
 
-        if len(swing_modes) > 0:
-            return swing_modes
+            if len(swing_modes) > 0:
+                return swing_modes
 
         return None
 
@@ -737,8 +748,12 @@ class CieloHomeDevice:
             self._device["latestAction"]["temp"] = data["action"]["temp"]
             self._device["latestAction"]["fanspeed"] = data["action"]["fanspeed"]
             self._device["latestAction"]["mode"] = data["action"]["mode"]
-            self._device["latestAction"]["swing"] = data["action"]["swing"]
             self._device["latestAction"]["power"] = data["action"]["power"]
+
+            try:
+                self._device["latestAction"]["swing"] = data["action"]["swing"]
+            except KeyError:
+                pass
 
             try:
                 self._device["latestAction"]["turbo"] = data["action"]["turbo"]

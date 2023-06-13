@@ -88,7 +88,8 @@ class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
 
         self._attr_hvac_modes = self._device.get_hvac_modes()
         self._attr_fan_modes = self._device.get_fan_modes()
-        self._attr_swing_modes = self._device.get_swing_modes()
+        if self._device.get_is_available_swing_modes():
+            self._attr_swing_modes = self._device.get_swing_modes()
 
         if self._attr_fan_modes is not None:
             self._attr_supported_features |= ClimateEntityFeature.FAN_MODE

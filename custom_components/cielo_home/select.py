@@ -24,7 +24,7 @@ async def async_setup_entry(
             entity_fan = CieloHomeFanSelect(device)
             entities.append(entity_fan)
 
-        if device.get_swing_modes() is not None:
+        if device.get_is_available_swing_modes():
             entity_swing = CieloHomeSwingSelect(device)
             entities.append(entity_swing)
 
