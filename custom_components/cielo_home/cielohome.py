@@ -36,6 +36,7 @@ class CieloHome:
         self._msg_lock = Lock()
         self._timer_refresh: Timer
         self._timer_ping: Timer
+        self._timer_connection_lost: Timer
         self._last_refresh_token_ts: int
         self._last_ts_msg: int = 0
         self._x_api_key: str = ""
@@ -187,6 +188,7 @@ class CieloHome:
                 ) as websocket:
                     self._websocket = websocket
                     _LOGGER.info("Connected success")
+                    self.stop_timer_connection_lost()
 
                     if update_state:
                         asyncio.create_task(self.update_state_device())
@@ -259,9 +261,10 @@ class CieloHome:
             await self._websocket.close()
 
         if not self._stop_running:
-            _LOGGER.info("Try reconnection in 5 secondes")
-            for listener in self.__event_listener:
-                listener.lost_connection()
+            _LOGGER.debug("Try reconnection in 5 secondes")
+            # for listener in self.__event_listener:
+            #    listener.lost_connection()
+            self.start_timer_connection_lost()
             await asyncio.sleep(5)
             asyncio.create_task(self.async_connect_wss(True))
 
@@ -283,6 +286,21 @@ class CieloHome:
         """c"""
         self._timer_ping = Timer(588, self.send_ping)
         self._timer_ping.start()  # Here run is called
+
+    def start_timer_connection_lost(self):
+        """c"""
+        self._timer_connection_lost = Timer(10, self.dispatch_connection_lost)
+        self._timer_connection_lost.start()  # Here run is called
+
+    def stop_timer_connection_lost(self):
+        """c"""
+        if self._timer_connection_lost:
+            self._timer_connection_lost.cancel()
+
+    def dispatch_connection_lost(self):
+        """c"""
+        for listener in self.__event_listener:
+            listener.lost_connection()
 
     def send_ping(self):
         """c"""
