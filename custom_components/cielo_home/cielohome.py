@@ -36,7 +36,7 @@ class CieloHome:
         self._msg_lock = Lock()
         self._timer_refresh: Timer
         self._timer_ping: Timer
-        self._timer_connection_lost: Timer
+        self._timer_connection_lost: Timer = None
         self._last_refresh_token_ts: int
         self._last_ts_msg: int = 0
         self._x_api_key: str = ""

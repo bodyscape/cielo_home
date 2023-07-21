@@ -88,13 +88,14 @@ class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
 
         self._attr_hvac_modes = self._device.get_hvac_modes()
         self._attr_fan_modes = self._device.get_fan_modes()
+        self._attr_swing_modes = None
         if self._device.get_is_available_swing_modes():
             self._attr_swing_modes = self._device.get_swing_modes()
 
-        if self._attr_fan_modes is not None:
+        if self._attr_fan_modes:
             self._attr_supported_features |= ClimateEntityFeature.FAN_MODE
 
-        if self._attr_swing_modes is not None:
+        if self._device.get_is_available_swing_modes():
             self._attr_supported_features |= ClimateEntityFeature.SWING_MODE
 
         self._attr_min_temp = self._device.get_min_temp()
@@ -159,7 +160,10 @@ class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
         self._attr_target_temperature = self._device.get_target_temperature()
         self._attr_current_temperature = self._device.get_current_temperature()
         self._attr_current_humidity = self._device.get_humidity()
-        self._attr_fan_mode = self._device.get_fan_mode()
-        self._attr_swing_mode = self._device.get_swing_mode()
-        self._attr_preset_mode = self._device.get_preset_mode()
+        if self._attr_fan_modes is not None:
+            self._attr_fan_mode = self._device.get_fan_mode()
+        if self._device.get_is_available_swing_modes():
+            self._attr_swing_mode = self._device.get_swing_mode()
+        if self._attr_preset_modes is not None:
+            self._attr_preset_mode = self._device.get_preset_mode()
         self._attr_hvac_mode = self._device.get_hvac_mode()

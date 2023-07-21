@@ -53,6 +53,11 @@ class CieloHomeDevice:
         self.__event_listener: list[object] = []
         self._api.add_listener(self)
         self._timer_lock = Lock()
+        # try:
+        #    self._device["appliance"]["swing"] = ""
+        #     self._device["appliance"]["fan"] = ""
+        # except KeyError:
+        #    pass
 
     def add_listener(self, listener: object) -> None:
         """c"""
@@ -324,7 +329,7 @@ class CieloHomeDevice:
     def get_is_available_swing_modes(self) -> bool:
         """c"""
         try:
-            return self._device["appliance"]["swing"] != ""
+            return self.get_available_swing_modes() != ""
         except KeyError:
             pass
 
@@ -443,7 +448,11 @@ class CieloHomeDevice:
 
     def get_swing(self) -> str:
         """c"""
-        return self._device["latestAction"]["swing"]
+        try:
+            return self._device["latestAction"]["swing"]
+        except KeyError:
+            pass
+        return ""
 
     def get_status(self) -> bool:
         """c"""
