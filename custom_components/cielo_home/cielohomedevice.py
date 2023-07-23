@@ -61,6 +61,7 @@ class CieloHomeDevice:
         self._timer_lock = Lock()
         self._force_connection_source = force_connection_source
         self._connection_source = 1 if connection_source else 0
+        self._old_power = self._device["latestAction"]["power"]
         # try:
         #    self._device["appliance"]["swing"] = ""
         #     self._device["appliance"]["fan"] = ""
@@ -166,6 +167,7 @@ class CieloHomeDevice:
             "application_version": "1.0.0",
             "ts": 0,
             "actions": action,
+            "oldPower": self._old_power,
         }
 
         if default_action == "actionControl":
@@ -480,7 +482,6 @@ class CieloHomeDevice:
             "fanspeed": self._device["latestAction"]["fanspeed"],
             "temp": self._device["latestAction"]["temp"],
             "swing": self._device["latestAction"]["swing"],
-            "oldPower": self._device["latestAction"]["power"],
         }
 
         try:
@@ -495,7 +496,7 @@ class CieloHomeDevice:
                 else self._device["latestAction"]["light"]
             )
         except KeyError:
-            pass
+            action["light"] = "off"
 
         return action
 
@@ -768,6 +769,7 @@ class CieloHomeDevice:
             self._device["latestAction"]["fanspeed"] = data["action"]["fanspeed"]
             self._device["latestAction"]["mode"] = data["action"]["mode"]
             self._device["latestAction"]["power"] = data["action"]["power"]
+            self._old_power = self._device["latestAction"]["power"]
 
             try:
                 self._device["latestAction"]["swing"] = data["action"]["swing"]

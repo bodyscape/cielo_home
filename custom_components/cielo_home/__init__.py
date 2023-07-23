@@ -30,13 +30,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Cielo Home from a config entry."""
 
     hass.data.setdefault(DOMAIN, {})
-
     # conf = entry.data
 
     # username = conf[CONF_USERNAME]
     # password = conf[CONF_PASSWORD]
 
-    api = CieloHome()
+    api = CieloHome(hass)
 
     if not await api.async_auth(
         entry.data[CONF_USERNAME], entry.data[CONF_PASSWORD], True

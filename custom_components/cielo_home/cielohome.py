@@ -11,6 +11,8 @@ from threading import Lock, Timer
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
 import requests
 
+from homeassistant.core import HomeAssistant
+
 from .const import URL_API, URL_API_WSS, URL_CIELO
 
 _LOGGER = logging.getLogger(__name__)
@@ -19,7 +21,7 @@ _LOGGER = logging.getLogger(__name__)
 class CieloHome:
     """Set up Cielo Home api."""
 
-    def __init__(self) -> None:
+    def __init__(self, hass: HomeAssistant) -> None:
         """Set up Cielo Home api."""
         self._is_running: bool = True
         self._stop_running: bool = False
@@ -40,6 +42,7 @@ class CieloHome:
         self._last_refresh_token_ts: int
         self._last_ts_msg: int = 0
         self._x_api_key: str = ""
+        self._hass: HomeAssistant = hass
 
     async def close(self):
         """c"""
@@ -80,7 +83,7 @@ class CieloHome:
             "deviceTokenId": "WEB",
             "appType": "WEB",
             "appVersion": "1.0",
-            "timeZone": "America/Toronto",
+            "timeZone": self._hass.config.time_zone,
             "mobileDeviceName": "chrome",
             "deviceType": "WEB",
             "ipAddress": "0.0.0.0",
