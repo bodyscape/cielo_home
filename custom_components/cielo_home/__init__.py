@@ -50,7 +50,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     cw_devices: list[CieloHomeDevice] = []
 
     for device in list_devices:
-        cw_device = CieloHomeDevice(device, api)
+        cw_device = CieloHomeDevice(
+            device,
+            api,
+            entry.data["force_connection_source"],
+            entry.data["connection_source"],
+        )
         cw_devices.append(cw_device)
 
     hass.data[DOMAIN][entry.entry_id + "_devices"] = cw_devices

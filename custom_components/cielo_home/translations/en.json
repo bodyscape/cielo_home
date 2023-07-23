@@ -13,7 +13,9 @@
                 "data": {
                     "host": "Host",
                     "password": "Password",
-                    "username": "Username"
+                    "username": "Username",
+                    "force_connection_source": "Force connection source value (False by default)",
+                    "connection_source": "Connection source value (True or False)"
                 }
             }
         }

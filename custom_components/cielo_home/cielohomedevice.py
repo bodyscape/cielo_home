@@ -45,7 +45,13 @@ _LOGGER = logging.getLogger(__name__)
 class CieloHomeDevice:
     """Set up Cielo Home api."""
 
-    def __init__(self, device, api: CieloHome) -> None:
+    def __init__(
+        self,
+        device,
+        api: CieloHome,
+        force_connection_source: bool,
+        connection_source: bool,
+    ) -> None:
         """Set up Cielo Home device."""
         self._api = api
         self._device = device
@@ -53,6 +59,8 @@ class CieloHomeDevice:
         self.__event_listener: list[object] = []
         self._api.add_listener(self)
         self._timer_lock = Lock()
+        self._force_connection_source = force_connection_source
+        self._connection_source = 1 if connection_source else 0
         # try:
         #    self._device["appliance"]["swing"] = ""
         #     self._device["appliance"]["fan"] = ""
@@ -150,7 +158,9 @@ class CieloHomeDevice:
             "actionSource": "WEB",
             "applianceType": self.get_appliance_type(),
             "applianceId": self.get_appliance_id(),
-            "connection_source": self.get_connection_source(),
+            "connection_source": self._connection_source
+            if self._force_connection_source
+            else self.get_connection_source(),
             "token": "",
             "mid": "",
             "application_version": "1.0.0",

@@ -4,7 +4,9 @@
       "user": {
         "data": {
           "username": "[%key:common::config_flow::data::username%]",
-          "password": "[%key:common::config_flow::data::password%]"
+          "password": "[%key:common::config_flow::data::password%]",
+          "force_connection_source": "[%key:common::config_flow::data::force_connection_source%]",
+          "connection_source": "[%key:common::config_flow::data::connection_source%]"
         }
       }
     },
