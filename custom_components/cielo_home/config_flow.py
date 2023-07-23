@@ -31,7 +31,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
     """Validate the user input allows us to connect."""
 
-    api = CieloHome()
+    api = CieloHome(hass)
 
     if not await api.async_auth(data[CONF_USERNAME], data[CONF_PASSWORD]):
         _LOGGER.error("Failed to login to Cielo Home")
