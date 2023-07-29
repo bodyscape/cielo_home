@@ -1,4 +1,4 @@
-#Cielo Home / Mr Cool devices integration for Home Assistant
+# Cielo Home / Mr Cool devices integration for Home Assistant
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 [![cielo_home](https://img.shields.io/github/release/bodyscape/cielo_home/all.svg?style=for-the-badge)](https://github.com/bodyscape/cielo_home/releases)
