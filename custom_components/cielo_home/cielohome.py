@@ -4,16 +4,14 @@ import copy
 from datetime import datetime
 import json
 import logging
-import pathlib
 import sys
 from threading import Lock, Timer
 
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
-import requests
 
 from homeassistant.core import HomeAssistant
 
-from .const import URL_API, URL_API_WSS, URL_CIELO
+from .const import URL_API, URL_API_WSS, URL_CIELO, USER_AGENT
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -58,7 +56,7 @@ class CieloHome:
         self, user_name: str, password: str, connect_ws: bool = False
     ) -> bool:
         """Set up Cielo Home auth."""
-        login_url = "https://home.cielowigle.com/"
+        login_url = URL_CIELO
         main_js_url = ""
         async with ClientSession() as session:
             async with session.get(login_url + "auth/login") as resp:
@@ -95,7 +93,7 @@ class CieloHome:
             "content-type": "application/json; charset=UTF-8",
             "referer": URL_CIELO,
             "origin": URL_CIELO,
-            "user-agent": "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+            "user-agent": USER_AGENT,
             "x-api-key": self._x_api_key,
         }
 
@@ -163,31 +161,24 @@ class CieloHome:
     async def async_connect_wss(self, update_state: bool = False):
         """c"""
         headers_wss = {
-            "host": URL_API_WSS,
-            "origin": URL_CIELO,
-            "accept-encoding": "gzip, deflate, br",
-            "cache-control": "no-cache",
-            "connection": "Upgrade",
-            "pragma": "no-cache",
-            "upgrade": "websocket",
-            "user-agent": "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+            "Host": URL_API_WSS,
+            "Cache-control": "no-cache",
+            "Pragma": "no-cache",
+            "User-agent": USER_AGENT,
         }
 
-        wss_uri = (
-            "wss://"
-            + URL_API_WSS
-            + "/websocket/?sessionId="
-            + self._session_id
-            + "&token="
-            + self._access_token
-        )
+        wss_uri = "wss://" + URL_API_WSS + "/websocket/"
 
         self._is_running = True
         self._stop_running = False
         try:
             async with ClientSession() as ws_session:
                 async with ws_session.ws_connect(
-                    wss_uri, headers=headers_wss
+                    wss_uri,
+                    headers=headers_wss,
+                    params={"sessionId": self._session_id, "token": self._access_token},
+                    origin=URL_CIELO[:-1],
+                    compress=15,
                 ) as websocket:
                     self._websocket = websocket
                     _LOGGER.info("Connected success")
