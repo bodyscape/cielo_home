@@ -10,6 +10,7 @@
 A Home Assistant custom integration to control Cielo Home devices.
 
 ## Configuration
+
 If you have installed a version prior the verion 1.6.0 you need to uninstall the integration and install it again.
 
 For find the field in the initial configuration setup follow this.
