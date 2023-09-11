@@ -9,6 +9,27 @@
 
 A Home Assistant custom integration to control Cielo Home devices.
 
+## Configuration
+If you have installed a version prior the verion 1.6.0 you need to uninstall the integration and install it again.
+
+For find the field in the initial configuration setup follow this.
+
+1. Open chrome to https://home.cielowigle.com/.
+2. Open the console tool with F12.
+3. Click on the 'Network' tab.
+4. Check the option 'Disable cache' and 'Preserve log'
+5. Fill your login, password and complete the recaptcha.
+6. Click 'Sign in'.
+
+![image](https://github.com/bodyscape/cielo_home/assets/30115568/3d1878e3-031e-4ab7-86ab-464c15b11eeb)
+
+8. Click on the new row on network who have the 'login' on it.
+9. Click on the new subtab 'Response'
+10. In the is response who have the field ask the initial configuration
+
+![image](https://github.com/bodyscape/cielo_home/assets/30115568/96702e55-d4e0-4815-8316-a9a6cfbbab74)
+
+
 ## Functionality
 
 ![image](https://user-images.githubusercontent.com/30115568/229196023-6d2923fa-a09d-4e03-8615-78060a2003d6.png)
