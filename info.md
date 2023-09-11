@@ -32,6 +32,8 @@ For find the field in the initial configuration setup follow this.
 11. Also Keep in mind if your HA or this integration don't run for more than 1 hour you must uninstall it and reinstall it.
 
 ![image](https://github.com/bodyscape/cielo_home/assets/30115568/96702e55-d4e0-4815-8316-a9a6cfbbab74)
+![image](https://github.com/bodyscape/cielo_home/assets/30115568/19e3d181-6091-4814-8ed8-b222396bc989)
+
 
 
 ## Functionality
