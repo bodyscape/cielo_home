@@ -26,7 +26,7 @@ For find the field in the initial configuration setup follow this.
 
 8. Click on the new row on network who have the 'login' on it.
 9. Click on the new subtab 'Response'
-10. Copy all the Response in a text file and close the browser (Really important to close browser not only the tab)
+10. Copy all the Response in a text file and close Chrome (Don't sign out, close the whole Chrome not just the tab. Really important)
 11. In the is response who have the field ask the initial configuration. Also Keep in mind if your HA or this integration don't run for more than 1 hour you must uninstall it and reinstall it.
 
 ![image](https://github.com/bodyscape/cielo_home/assets/30115568/96702e55-d4e0-4815-8316-a9a6cfbbab74)
