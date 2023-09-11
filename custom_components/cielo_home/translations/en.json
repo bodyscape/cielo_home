@@ -11,9 +11,10 @@
         "step": {
             "user": {
                 "data": {
-                    "host": "Host",
-                    "password": "Password",
-                    "username": "Username",
+                    "access_token": "Access Token (accessToken)",
+                    "refresh_token": "Refresh Token (refreshToken)",
+                    "session_id": "Session Id (sessionId)",
+                    "user_id": "User Id (userId)",
                     "force_connection_source": "Force connection source value (False by default)",
                     "connection_source": "Connection source value (True or False)"
                 }

@@ -4,11 +4,15 @@ import copy
 from datetime import datetime
 import json
 import logging
+import pathlib
+import random
+import string
 import sys
 from threading import Lock, Timer
 
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import URL_API, URL_API_WSS, URL_CIELO, USER_AGENT
@@ -19,7 +23,7 @@ _LOGGER = logging.getLogger(__name__)
 class CieloHome:
     """Set up Cielo Home api."""
 
-    def __init__(self, hass: HomeAssistant) -> None:
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Set up Cielo Home api."""
         self._is_running: bool = True
         self._stop_running: bool = False
@@ -27,8 +31,8 @@ class CieloHome:
         self._refresh_token: str = ""
         self._session_id: str = ""
         self._user_id: str = ""
-        self._user_name: str = ""
-        self._password: str = ""
+        # self._user_name: str = ""
+        # self._password: str = ""
         self._headers: dict[str, str] = {}
         self._websocket: ClientWebSocketResponse
         self.__event_listener: list[object] = []
@@ -41,6 +45,13 @@ class CieloHome:
         self._last_ts_msg: int = 0
         self._x_api_key: str = ""
         self._hass: HomeAssistant = hass
+        self._entry: ConfigEntry = entry
+        self._headers = {
+            "content-type": "application/json; charset=UTF-8",
+            "referer": URL_CIELO,
+            "origin": URL_CIELO,
+            "user-agent": USER_AGENT,
+        }
 
     async def close(self):
         """c"""
@@ -52,14 +63,17 @@ class CieloHome:
         """c"""
         self.__event_listener.append(listener)
 
-    async def async_auth(
-        self, user_name: str, password: str, connect_ws: bool = False
-    ) -> bool:
-        """Set up Cielo Home auth."""
+    async def set_x_api_key(self) -> bool:
+        """Get the x_api_key"""
         login_url = URL_CIELO
         main_js_url = ""
         async with ClientSession() as session:
-            async with session.get(login_url + "auth/login") as resp:
+            session.headers.add("Cache-Control", "no-cache, no-store, must-revalidate")
+            session.headers.add("Pragma", "no-cache")
+            session.headers.add("Expires", "0")
+            async with session.get(
+                login_url + "auth/login?t=" + str(self.get_ts())
+            ) as resp:
                 html_text = await resp.text()
                 index = html_text.find('src="main.')
                 index2 = html_text.find('"', index + 5)
@@ -67,62 +81,39 @@ class CieloHome:
 
         if main_js_url != "":
             async with ClientSession() as session:
-                async with session.get(login_url + main_js_url) as resp:
+                async with session.get(
+                    login_url + main_js_url + "?t=" + str(self.get_ts())
+                ) as resp:
                     html_text = await resp.text()
-                    index = html_text.find("apiKey:")
-                    index2 = html_text.find(",", index + 7)
-                    self._x_api_key = html_text[index + 7 : index2].replace('"', "")
+                    index = html_text.find("'apiKey':") + 9
+                    index2 = html_text.find("'key':", index) + 6
+                    self._x_api_key = html_text[
+                        index2 : html_text.find(",", index2)
+                    ].replace("'", "")
+                    self._headers["x-api-key"] = self._x_api_key
 
-        pload = {}
-        pload["user"] = {
-            "userId": user_name,
-            "password": password,
-            "mobileDeviceId": "WEB",
-            "deviceTokenId": "WEB",
-            "appType": "WEB",
-            "appVersion": "1.0",
-            "timeZone": self._hass.config.time_zone,
-            "mobileDeviceName": "chrome",
-            "deviceType": "WEB",
-            "ipAddress": "0.0.0.0",
-            "isSmartHVAC": 0,
-            "locale": "en",
-        }
+        return self._x_api_key != ""
 
-        self._headers = {
-            "content-type": "application/json; charset=UTF-8",
-            "referer": URL_CIELO,
-            "origin": URL_CIELO,
-            "user-agent": USER_AGENT,
-            "x-api-key": self._x_api_key,
-        }
+    async def async_auth(
+        self, access_token: str, refresh_token: str, session_id: str, user_id: str
+    ) -> bool:
+        """Set up Cielo Home auth."""
 
-        _LOGGER.debug("Call Auth")
-        async with ClientSession() as session:
-            async with session.post(
-                "https://" + URL_API + "/web/login",
-                headers=self._headers,
-                json=pload,
-            ) as response:
-                if response.status == 200:
-                    repjson = await response.json()
-                    if repjson["status"] == 200 and repjson["message"] == "SUCCESS":
-                        # print("repJson:", repjson)
-                        self._access_token = repjson["data"]["user"]["accessToken"]
-                        self._refresh_token = repjson["data"]["user"]["refreshToken"]
-                        self._session_id = repjson["data"]["user"]["sessionId"]
-                        self._user_id = repjson["data"]["user"]["userId"]
-                        self._user_name = user_name
-                        self._password = password
+        if not await self.set_x_api_key():
+            return False
 
-                    if connect_ws and self._access_token != "":
-                        asyncio.create_task(self.async_connect_wss())
+        self._access_token = access_token
+        self._refresh_token = refresh_token
+        self._session_id = session_id
+        self._user_id = user_id
 
-                    self._last_refresh_token_ts = self.get_ts()
-                    self.start_timer_refreshtoken()
-                    return self._access_token != ""
+        if self._access_token != "":
+            asyncio.create_task(self.async_connect_wss())
 
-        return False
+        self._last_refresh_token_ts = self.get_ts()
+        self.start_timer_refreshtoken()
+
+        return True
 
     def start_timer_refreshtoken(self):
         """c"""
@@ -133,12 +124,42 @@ class CieloHome:
         """c"""
 
         self.start_timer_refreshtoken()
-        if (self.get_ts() - self._last_refresh_token_ts) > 1200:
+        if (self.get_ts() - self._last_refresh_token_ts) > 2400:
             asyncio.run(self.async_refresh_token())
 
-    async def async_refresh_token(self):
+    async def async_refresh_token(
+        self,
+        access_token: str = "",
+        refresh_token: str = "",
+        session_id: str = "",
+        user_id: str = "",
+    ) -> bool:
         """Set up Cielo Home refresh."""
         _LOGGER.debug("Call refreshToken")
+
+        await self.set_x_api_key()
+
+        # Opening JSON file
+        # fullpath: str = str(pathlib.Path(__file__).parent.resolve()) + "/login.json"
+        # file = open(fullpath)
+
+        # # returns JSON object as
+        # # a dictionary
+        # data = json.load(file)
+
+        # # Iterating through the json
+        # # list
+        # access_token = data["data"]["user"]["accessToken"]
+        # refresh_token = data["data"]["user"]["refreshToken"]
+        # self._session_id = data["data"]["user"]["sessionId"]
+        # file.close()
+
+        if access_token != "":
+            self._access_token = access_token
+            self._refresh_token = refresh_token
+            self._session_id = session_id
+            self._user_id = user_id
+
         self._headers["authorization"] = self._access_token
         async with ClientSession() as session:
             async with session.get(
@@ -154,9 +175,17 @@ class CieloHome:
                         # print("repJson:", repjson)
                         self._access_token = repjson["data"]["accessToken"]
                         self._refresh_token = repjson["data"]["refreshToken"]
+                        if self._entry is not None:
+                            config_data = self._entry.data.copy()
+                            config_data["access_token"] = self._access_token
+                            config_data["refresh_token"] = self._refresh_token
+                            self._hass.config_entries.async_update_entry(
+                                self._entry, data=config_data
+                            )
                         self._last_refresh_token_ts = self.get_ts()
-                        # self._is_running = False
                         _LOGGER.debug("Call refreshToken success")
+                        return True
+        return False
 
     async def async_connect_wss(self, update_state: bool = False):
         """c"""
@@ -248,18 +277,18 @@ class CieloHome:
                         await asyncio.sleep(0.1)
         except Exception:
             _LOGGER.error(sys.exc_info()[1])
-            self._last_refresh_token_ts = self.get_ts() - 1200
+            self._last_refresh_token_ts = self.get_ts() - 2400
 
         if hasattr(self, "_websocket") and not self._websocket.closed:
             self._timer_ping.cancel()
             await self._websocket.close()
 
         if not self._stop_running:
-            _LOGGER.debug("Try reconnection in 5 secondes")
+            _LOGGER.debug("Try reconnection in 20 secondes")
             # for listener in self.__event_listener:
             #    listener.lost_connection()
             self.start_timer_connection_lost()
-            await asyncio.sleep(5)
+            await asyncio.sleep(20)
             asyncio.create_task(self.async_connect_wss(True))
 
     def send_action(self, msg) -> None:

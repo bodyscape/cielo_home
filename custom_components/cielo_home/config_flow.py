@@ -7,7 +7,6 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
@@ -20,8 +19,10 @@ _LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required("username"): str,
-        vol.Required("password"): str,
+        vol.Required("access_token"): str,
+        vol.Required("refresh_token"): str,
+        vol.Required("session_id"): str,
+        vol.Required("user_id"): str,
         vol.Required("force_connection_source"): bool,
         vol.Required("connection_source"): bool,
     }
@@ -31,9 +32,11 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
     """Validate the user input allows us to connect."""
 
-    api = CieloHome(hass)
+    api = CieloHome(hass, None)
 
-    if not await api.async_auth(data[CONF_USERNAME], data[CONF_PASSWORD]):
+    if not await api.async_refresh_token(
+        data["access_token"], data["refresh_token"], data["session_id"], data["user_id"]
+    ):
         _LOGGER.error("Failed to login to Cielo Home")
         raise InvalidAuth
 

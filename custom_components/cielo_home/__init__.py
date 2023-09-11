@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from types import MappingProxyType, MethodType
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
@@ -31,14 +32,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data.setdefault(DOMAIN, {})
     # conf = entry.data
-
-    # username = conf[CONF_USERNAME]
-    # password = conf[CONF_PASSWORD]
-
-    api = CieloHome(hass)
+    api = CieloHome(hass, entry)
+    # setattr(entry.data, "user_id", "gfdgdfg")
 
     if not await api.async_auth(
-        entry.data[CONF_USERNAME], entry.data[CONF_PASSWORD], True
+        entry.data["access_token"],
+        entry.data["refresh_token"],
+        entry.data["session_id"],
+        entry.data["user_id"],
     ):
         _LOGGER.error("Failed to login to Cielo Home")
 
@@ -62,6 +63,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             api,
             force_connection_source,
             connection_source,
+            entry.data["user_id"],
         )
         cw_devices.append(cw_device)
 

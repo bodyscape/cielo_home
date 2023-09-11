@@ -51,6 +51,7 @@ class CieloHomeDevice:
         api: CieloHome,
         force_connection_source: bool,
         connection_source: bool,
+        user_id,
     ) -> None:
         """Set up Cielo Home device."""
         self._api = api
@@ -61,6 +62,7 @@ class CieloHomeDevice:
         self._timer_lock = Lock()
         self._force_connection_source = force_connection_source
         self._connection_source = 1 if connection_source else 0
+        self._user_id = user_id
         self._old_power = self._device["latestAction"]["power"]
         # try:
         #    self._device["appliance"]["swing"] = ""
@@ -159,11 +161,14 @@ class CieloHomeDevice:
             "actionSource": "WEB",
             "applianceType": self.get_appliance_type(),
             "applianceId": self.get_appliance_id(),
+            "myRuleConfiguration": self.get_my_rule_configuration(),
             "connection_source": self._connection_source
             if self._force_connection_source
             else self.get_connection_source(),
+            "user_id": self._user_id,
             "token": "",
             "mid": "",
+            "preset": 0,
             "application_version": "1.0.0",
             "ts": 0,
             "actions": action,
@@ -407,6 +412,10 @@ class CieloHomeDevice:
     def get_appliance_id(self) -> int:
         """c"""
         return self._device["applianceId"]
+
+    def get_my_rule_configuration(self) -> any:
+        """c"""
+        return self._device["myRuleConfiguration"]
 
     def get_connection_source(self) -> int:
         """c"""
@@ -786,7 +795,8 @@ class CieloHomeDevice:
             except KeyError:
                 pass
 
-            self.dispatch_state_timer()
+            # self.dispatch_state_timer()
+            self.dispatch_state_updated()
 
     def state_device_receive(self, device_state):
         """c"""
