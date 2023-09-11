@@ -12,6 +12,7 @@ A Home Assistant custom integration to control Cielo Home devices.
 ## Configuration
 
 If you have installed a version prior 1.6.0 you need to uninstall the integration and install it again.
+You need to restart HA after the uninstall and after the install.
 
 For find the field in the initial configuration setup follow this.
 
@@ -24,10 +25,11 @@ For find the field in the initial configuration setup follow this.
 
 ![image](https://github.com/bodyscape/cielo_home/assets/30115568/3d1878e3-031e-4ab7-86ab-464c15b11eeb)
 
-8. Click on the new row on network who have the 'login' on it.
-9. Click on the new subtab 'Response'
-10. Copy all the Response in a text file and close Chrome (Don't sign out, close the whole Chrome not just the tab. Really important)
-11. In this response who have the field ask the initial configuration, copy paste and be careful to the whitespace . Also Keep in mind if your HA or this integration don't run for more than 1 hour you must uninstall it and reinstall it.
+7. Click on the new row on network who have the 'login' on it.
+8. Click on the new subtab 'Response'
+9. Copy all the Response in a text file and close Chrome (Don't sign out, close the whole Chrome not just the tab. Really important)
+10. Search within text file to find and copy/paste the values in configuration dialog (without quotes).
+11. Also Keep in mind if your HA or this integration don't run for more than 1 hour you must uninstall it and reinstall it.
 
 ![image](https://github.com/bodyscape/cielo_home/assets/30115568/96702e55-d4e0-4815-8316-a9a6cfbbab74)
 
