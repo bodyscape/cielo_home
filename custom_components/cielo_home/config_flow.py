@@ -35,7 +35,11 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     api = CieloHome(hass, None)
 
     if not await api.async_refresh_token(
-        data["access_token"], data["refresh_token"], data["session_id"], data["user_id"]
+        data["access_token"],
+        data["refresh_token"],
+        data["session_id"],
+        data["user_id"],
+        True,
     ):
         _LOGGER.error("Failed to login to Cielo Home")
         raise InvalidAuth

@@ -19,6 +19,13 @@ from .const import URL_API, URL_API_WSS, URL_CIELO, USER_AGENT
 
 _LOGGER = logging.getLogger(__name__)
 
+TIMEOUT_RECONNECT = 10
+TIME_REFRESH_TOKEN = 3300
+TIMER_PING = 900
+
+# TIME_REFRESH_TOKEN = 20
+# TIMER_PING = 5
+
 
 class CieloHome:
     """Set up Cielo Home api."""
@@ -44,6 +51,7 @@ class CieloHome:
         self._last_refresh_token_ts: int
         self._last_ts_msg: int = 0
         self._x_api_key: str = ""
+        self._reconnect_now = False
         self._hass: HomeAssistant = hass
         self._entry: ConfigEntry = entry
         self._headers = {
@@ -124,8 +132,11 @@ class CieloHome:
         """c"""
 
         self.start_timer_refreshtoken()
-        if (self.get_ts() - self._last_refresh_token_ts) > 2400:
-            asyncio.run(self.async_refresh_token())
+        if (self.get_ts() - self._last_refresh_token_ts) > TIME_REFRESH_TOKEN:
+            self._reconnect_now = True
+            asyncio.run_coroutine_threadsafe(
+                self.async_refresh_token(), self._hass.loop
+            ).result()
 
     async def async_refresh_token(
         self,
@@ -133,6 +144,7 @@ class CieloHome:
         refresh_token: str = "",
         session_id: str = "",
         user_id: str = "",
+        test: bool = False,
     ) -> bool:
         """Set up Cielo Home refresh."""
         _LOGGER.debug("Call refreshToken")
@@ -175,15 +187,19 @@ class CieloHome:
                         # print("repJson:", repjson)
                         self._access_token = repjson["data"]["accessToken"]
                         self._refresh_token = repjson["data"]["refreshToken"]
-                        if self._entry is not None:
-                            config_data = self._entry.data.copy()
-                            config_data["access_token"] = self._access_token
-                            config_data["refresh_token"] = self._refresh_token
-                            self._hass.config_entries.async_update_entry(
-                                self._entry, data=config_data
-                            )
-                        self._last_refresh_token_ts = self.get_ts()
-                        _LOGGER.debug("Call refreshToken success")
+                        if not test:
+                            if self._entry is not None:
+                                config_data = self._entry.data.copy()
+                                config_data["access_token"] = self._access_token
+                                config_data["refresh_token"] = self._refresh_token
+                                self._hass.config_entries.async_update_entry(
+                                    self._entry, data=config_data
+                                )
+                            await self._websocket.close()
+                            self._last_refresh_token_ts = self.get_ts()
+                            _LOGGER.debug("Call refreshToken success")
+                        else:
+                            _LOGGER.debug("Call test refreshToken success")
                         return True
         return False
 
@@ -196,10 +212,12 @@ class CieloHome:
             "User-agent": USER_AGENT,
         }
 
+        self._reconnect_now = False
         wss_uri = "wss://" + URL_API_WSS + "/websocket/"
 
         self._is_running = True
         self._stop_running = False
+
         try:
             async with ClientSession() as ws_session:
                 async with ws_session.ws_connect(
@@ -215,7 +233,6 @@ class CieloHome:
 
                     if update_state:
                         asyncio.create_task(self.update_state_device())
-
                     self._last_refresh_token_ts = self.get_ts()
                     self.start_timer_ping()
                     while self._is_running:
@@ -226,6 +243,7 @@ class CieloHome:
                                 WSMsgType.CLOSED,
                                 WSMsgType.CLOSING,
                             ):
+                                self._timer_ping.cancel()
                                 _LOGGER.debug("Websocket closed : %s", msg.type)
                                 break
 
@@ -241,9 +259,19 @@ class CieloHome:
                             except ValueError:
                                 pass
 
-                            if js_data["message_type"] == "StateUpdate":
-                                for listener in self.__event_listener:
-                                    listener.data_receive(js_data)
+                            try:
+                                if js_data["message_type"] == "StateUpdate":
+                                    for listener in self.__event_listener:
+                                        listener.data_receive(js_data)
+                            except Exception:
+                                try:
+                                    if js_data["message"] == "Internal server error":
+                                        _LOGGER.debug(
+                                            "Receive error : %s", json.dumps(debug_data)
+                                        )
+                                except Exception:
+                                    pass
+
                         except asyncio.exceptions.TimeoutError:
                             pass
                         except asyncio.exceptions.CancelledError:
@@ -277,18 +305,24 @@ class CieloHome:
                         await asyncio.sleep(0.1)
         except Exception:
             _LOGGER.error(sys.exc_info()[1])
-            self._last_refresh_token_ts = self.get_ts() - 2400
+            self._last_refresh_token_ts = self.get_ts() - TIME_REFRESH_TOKEN
 
         if hasattr(self, "_websocket") and not self._websocket.closed:
             self._timer_ping.cancel()
             await self._websocket.close()
 
         if not self._stop_running:
-            _LOGGER.debug("Try reconnection in 20 secondes")
+
             # for listener in self.__event_listener:
             #    listener.lost_connection()
             self.start_timer_connection_lost()
-            await asyncio.sleep(20)
+            if not self._reconnect_now:
+                _LOGGER.debug(
+                    "Try reconnection in " + str(TIMEOUT_RECONNECT) + " secondes"
+                )
+                await asyncio.sleep(TIMEOUT_RECONNECT)
+            else:
+                _LOGGER.debug("Reconnection")
             asyncio.create_task(self.async_connect_wss(True))
 
     def send_action(self, msg) -> None:
@@ -307,18 +341,21 @@ class CieloHome:
 
     def start_timer_ping(self):
         """c"""
-        self._timer_ping = Timer(588, self.send_ping)
+        self._timer_ping = Timer(TIMER_PING, self.send_ping)
         self._timer_ping.start()  # Here run is called
 
     def start_timer_connection_lost(self):
         """c"""
-        self._timer_connection_lost = Timer(10, self.dispatch_connection_lost)
+        self._timer_connection_lost = Timer(
+            TIMEOUT_RECONNECT + 2, self.dispatch_connection_lost
+        )
         self._timer_connection_lost.start()  # Here run is called
 
     def stop_timer_connection_lost(self):
         """c"""
         if self._timer_connection_lost:
             self._timer_connection_lost.cancel()
+            self._timer_connection_lost = None
 
     def dispatch_connection_lost(self):
         """c"""
