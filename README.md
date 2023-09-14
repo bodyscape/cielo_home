@@ -30,6 +30,7 @@ For find the field in the initial configuration setup follow this.
 9. Copy all the Response in a text file and close Chrome (Don't sign out, close the whole Chrome not just the tab. Really important)
 10. Search within text file to find and copy/paste the values in configuration dialog (without quotes).
 11. Also Keep in mind if your HA or this integration don't run for more than 1 hour you must uninstall it and reinstall it.
+12. After you HA configuration it's done reopen your Chrome and check if you still logged on https://home.cielowigle.com/, if yes logout with the sign out button.
 
 ![image](https://github.com/bodyscape/cielo_home/assets/30115568/96702e55-d4e0-4815-8316-a9a6cfbbab74)
 ![image](https://github.com/bodyscape/cielo_home/assets/30115568/19e3d181-6091-4814-8ed8-b222396bc989)
