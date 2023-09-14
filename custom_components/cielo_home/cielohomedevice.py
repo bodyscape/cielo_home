@@ -415,7 +415,11 @@ class CieloHomeDevice:
 
     def get_my_rule_configuration(self) -> any:
         """c"""
-        return self._device["myRuleConfiguration"]
+        try:
+            return self._device["myRuleConfiguration"]
+        except KeyError:
+            pass
+        return {}
 
     def get_connection_source(self) -> int:
         """c"""
