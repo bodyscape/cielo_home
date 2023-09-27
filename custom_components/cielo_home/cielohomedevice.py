@@ -535,25 +535,34 @@ class CieloHomeDevice:
 
     def get_max_temp(self) -> float:
         """c"""
-        range_temp: str = self.get_range_temp()
-        device_unit: str = self.get_unit_of_temperature_appliance()
+        try:
+            range_temp: str = self.get_range_temp()
+            device_unit: str = self.get_unit_of_temperature_appliance()
+            range_temps: list = range_temp.split(":")
 
-        range_temps: list = range_temp.split(":")
+            return self.get_adjust_temp(
+                self.get_unit_of_temperature(), device_unit, int(range_temps[1])
+            )
+        except Exception:
+            pass
 
-        return self.get_adjust_temp(
-            self.get_unit_of_temperature(), device_unit, int(range_temps[1])
-        )
+        return -1
 
     def get_min_temp(self) -> float:
         """c"""
-        range_temp: str = self.get_range_temp()
-        device_unit: str = self.get_unit_of_temperature_appliance()
+        try:
+            range_temp: str = self.get_range_temp()
+            device_unit: str = self.get_unit_of_temperature_appliance()
 
-        range_temps: list = range_temp.split(":")
+            range_temps: list = range_temp.split(":")
 
-        return self.get_adjust_temp(
-            self.get_unit_of_temperature(), device_unit, int(range_temps[0])
-        )
+            return self.get_adjust_temp(
+                self.get_unit_of_temperature(), device_unit, int(range_temps[0])
+            )
+        except Exception:
+            pass
+
+        return -1
 
     def get_adjust_temp(
         self, target_unit_temp: str, current_unit_temp: str, temp: int

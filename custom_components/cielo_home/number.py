@@ -40,8 +40,12 @@ class CieloHomeTargetTempNumber(CieloHomeEntity, NumberEntity):
         )
         self._attr_icon = "mdi:home-thermometer"
         self._attr_device_class = NumberDeviceClass.TEMPERATURE
-        self._attr_native_max_value = self._device.get_max_temp()
-        self._attr_native_min_value = self._device.get_min_temp()
+
+        if self._device.get_max_temp() > 0:
+            self._attr_native_max_value = self._device.get_max_temp()
+        if self._device.get_min_temp() > 0:
+            self._attr_native_min_value = self._device.get_min_temp()
+
         self._attr_mode: NumberMode = NumberMode.AUTO
         self._attr_native_value = self._device.get_target_temperature()
         self._attr_native_unit_of_measurement = self._device.get_unit_of_temperature()
