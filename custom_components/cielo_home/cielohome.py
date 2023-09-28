@@ -450,7 +450,17 @@ class CieloHome:
                 else:
                     pass
 
-        return devices
+        devices_supported: list = []
+
+        if devices is not None:
+            for device in devices:
+                try:
+                    appliance_id: str = str(device["applianceId"])
+                    devices_supported.append(device)
+                except Exception:
+                    continue
+
+        return devices_supported
 
     async def async_get_thermostat_info(self, appliance_ids):
         """Get de the list Devices/Thermostats."""
