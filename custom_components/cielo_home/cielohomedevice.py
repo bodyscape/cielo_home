@@ -16,6 +16,8 @@ from .const import (
     FAN_LOW_VALUE,
     FAN_MEDIUM,
     FAN_MEDIUM_VALUE,
+    FOLLOW_ME_OFF,
+    FOLLOW_ME_ON,
     PRESET_MODES,
     PRESET_NONE,
     PRESET_TURBO,
@@ -252,6 +254,24 @@ class CieloHomeDevice:
         self._device["latestAction"]["fanspeed"] = value
         self._send_msg(action, "fanspeed", action["fanspeed"])
 
+    def send_follow_me_on(self) -> None:
+        """c"""
+        self.send_follow_me(FOLLOW_ME_ON)
+
+    def send_follow_me_off(self) -> None:
+        """c"""
+        self.send_follow_me(FOLLOW_ME_OFF)
+
+    def send_follow_me(self, value) -> None:
+        """c"""
+        if self._device["latestAction"]["followme"] == value:
+            return
+
+        action = self._get_action()
+        action["followme"] = value
+        self._device["latestAction"]["followme"] = value
+        self._send_msg(action, "followme", action["followme"])
+
     def send_swing_adjust(self) -> None:
         """c"""
         self._send_swing(SWING_ADJUST_VALUE)
@@ -375,7 +395,12 @@ class CieloHomeDevice:
 
     def get_is_followme_mode(self) -> bool:
         """c"""
-        return self._device["appliance"]["followme"] != ""
+        try:
+            return self._device["appliance"]["followme"] != ""
+        except KeyError:
+            pass
+
+        return False
 
     def get_range_temp(self) -> str:
         """c"""
@@ -440,6 +465,10 @@ class CieloHomeDevice:
     def get_power(self) -> str:
         """c"""
         return self._device["latestAction"]["power"]
+    
+    def get_follow_me(self) -> str:
+        """c"""
+        return self._device["latestAction"]["followme"]
 
     def get_light(self) -> str:
         """c"""
@@ -510,6 +539,11 @@ class CieloHomeDevice:
             )
         except KeyError:
             action["light"] = "off"
+
+        try:
+            action["followme"] = self._device["latestAction"]["followme"]
+        except KeyError:
+            pass
 
         return action
 
@@ -805,6 +839,11 @@ class CieloHomeDevice:
 
             try:
                 self._device["latestAction"]["light"] = data["action"]["light"]
+            except KeyError:
+                pass
+
+            try:
+                self._device["latestAction"]["followme"] = data["action"]["followme"]
             except KeyError:
                 pass
 

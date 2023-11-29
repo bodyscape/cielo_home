@@ -42,3 +42,6 @@ FAN_AUTO_VALUE = "auto"
 FAN_LOW_VALUE = "low"
 FAN_MEDIUM_VALUE = "medium"
 FAN_HIGH_VALUE = "high"
+
+FOLLOW_ME_ON = "on"
+FOLLOW_ME_OFF = "off"
