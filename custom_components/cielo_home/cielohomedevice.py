@@ -395,7 +395,12 @@ class CieloHomeDevice:
 
     def get_is_followme_mode(self) -> bool:
         """c"""
-        return self._device["appliance"]["followme"] != ""
+        try:
+            return self._device["appliance"]["followme"] != ""
+        except KeyError:
+            pass
+
+        return False
 
     def get_range_temp(self) -> str:
         """c"""
@@ -519,7 +524,6 @@ class CieloHomeDevice:
             "fanspeed": self._device["latestAction"]["fanspeed"],
             "temp": self._device["latestAction"]["temp"],
             "swing": self._device["latestAction"]["swing"],
-            "followme": self._device["latestAction"]["followme"], 
         }
 
         try:
@@ -535,6 +539,11 @@ class CieloHomeDevice:
             )
         except KeyError:
             action["light"] = "off"
+
+        try:
+            action["followme"] = self._device["latestAction"]["followme"]
+        except KeyError:
+            pass
 
         return action
 

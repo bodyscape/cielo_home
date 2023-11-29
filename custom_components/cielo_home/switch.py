@@ -32,7 +32,7 @@ async def async_setup_entry(
                 )
             )
 
-        if device.get_device_type() == "BREEZ-MAX":
+        if device.get_is_followme_mode():
             entities.append(
                 CieloHomeSwitchFollowMe(
                     device, "Follow Me", device.get_uniqueid() + "_follow_me"
