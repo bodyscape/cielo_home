@@ -4,9 +4,6 @@ import copy
 from datetime import datetime
 import json
 import logging
-import pathlib
-import random
-import string
 import sys
 from threading import Lock, Timer
 
@@ -62,13 +59,13 @@ class CieloHome:
         }
 
     async def close(self):
-        """c"""
+        """C"""
         self._stop_running = True
         self._is_running = False
         await asyncio.sleep(0.5)
 
     def add_listener(self, listener: object):
-        """c"""
+        """C"""
         self.__event_listener.append(listener)
 
     async def set_x_api_key(self) -> bool:
@@ -93,10 +90,10 @@ class CieloHome:
                     login_url + main_js_url + "?t=" + str(self.get_ts())
                 ) as resp:
                     html_text = await resp.text()
-                    index = html_text.find("'apiKey':") + 9
-                    index2 = html_text.find("'key':", index) + 6
+                    index = html_text.find(",'onChange',") + 12
+                    index = html_text.find(",", index) + 1
                     self._x_api_key = html_text[
-                        index2 : html_text.find(",", index2)
+                        index : html_text.find(",", index)
                     ].replace("'", "")
                     self._headers["x-api-key"] = self._x_api_key
 
@@ -124,12 +121,12 @@ class CieloHome:
         return True
 
     def start_timer_refreshtoken(self):
-        """c"""
+        """C"""
         self._timer_refresh = Timer(60, self.refresh_token)
         self._timer_refresh.start()  # Here run is called
 
     def refresh_token(self):
-        """c"""
+        """C"""
 
         self.start_timer_refreshtoken()
         if (self.get_ts() - self._last_refresh_token_ts) > TIME_REFRESH_TOKEN:
@@ -204,7 +201,7 @@ class CieloHome:
         return False
 
     async def async_connect_wss(self, update_state: bool = False):
-        """c"""
+        """C"""
         headers_wss = {
             "Host": URL_API_WSS,
             "Cache-control": "no-cache",
@@ -312,7 +309,6 @@ class CieloHome:
             await self._websocket.close()
 
         if not self._stop_running:
-
             # for listener in self.__event_listener:
             #    listener.lost_connection()
             self.start_timer_connection_lost()
@@ -326,7 +322,7 @@ class CieloHome:
             asyncio.create_task(self.async_connect_wss(True))
 
     def send_action(self, msg) -> None:
-        """c"""
+        """C"""
         msg["token"] = self._access_token
         msg["mid"] = self._session_id
         msg["ts"] = self.get_ts()
@@ -340,37 +336,37 @@ class CieloHome:
         self.send_json(msg)
 
     def start_timer_ping(self):
-        """c"""
+        """C"""
         self._timer_ping = Timer(TIMER_PING, self.send_ping)
         self._timer_ping.start()  # Here run is called
 
     def start_timer_connection_lost(self):
-        """c"""
+        """C"""
         self._timer_connection_lost = Timer(
             TIMEOUT_RECONNECT + 2, self.dispatch_connection_lost
         )
         self._timer_connection_lost.start()  # Here run is called
 
     def stop_timer_connection_lost(self):
-        """c"""
+        """C"""
         if self._timer_connection_lost:
             self._timer_connection_lost.cancel()
             self._timer_connection_lost = None
 
     def dispatch_connection_lost(self):
-        """c"""
+        """C"""
         for listener in self.__event_listener:
             listener.lost_connection()
 
     def send_ping(self):
-        """c"""
+        """C"""
         data = {"message": "Ping Connection Reset", "token": self._access_token}
         self.start_timer_ping()
         _LOGGER.debug("Send Ping Connection Reset")
         self.send_json(data)
 
     def send_json(self, data):
-        """c"""
+        """C"""
         self._msg_lock.acquire()
         try:
             self._msg_to_send.append(data)
@@ -378,11 +374,11 @@ class CieloHome:
             self._msg_lock.release()
 
     def get_ts(self) -> int:
-        """c"""
+        """C"""
         return int((datetime.utcnow() - datetime.fromtimestamp(0)).total_seconds())
 
     async def async_get_devices(self):
-        """c"""
+        """C"""
         devices = await self.async_get_thermostats()
 
         appliance_ids = ""
@@ -410,7 +406,7 @@ class CieloHome:
         return []
 
     async def update_state_device(self):
-        """c"""
+        """C"""
         devices = await self.async_get_thermostats()
         for listener in self.__event_listener:
             for device in devices:
