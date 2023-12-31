@@ -1,4 +1,4 @@
-"""c"""
+"""None."""
 from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -16,11 +16,10 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """c"""
+    """None."""
     entities = []
     cw_devices = hass.data[DOMAIN][config_entry.entry_id + "_devices"]
     for device in cw_devices:
-
         if device.get_fan_modes() is not None:
             entity = CieloHomeTargetTempNumber(device)
             entities.append(entity)
@@ -29,10 +28,10 @@ async def async_setup_entry(
 
 
 class CieloHomeTargetTempNumber(CieloHomeEntity, NumberEntity):
-    """c"""
+    """None."""
 
     def __init__(self, device: CieloHomeDevice) -> None:
-        """c"""
+        """None."""
         super().__init__(
             device,
             device.get_name() + " " + "Target Temperature",
@@ -53,7 +52,7 @@ class CieloHomeTargetTempNumber(CieloHomeEntity, NumberEntity):
         self._device.add_listener(self)
 
     def _update_internal_state(self):
-        """c"""
+        """None."""
         self._attr_native_value = self._device.get_target_temperature()
 
     def set_native_value(self, value: float) -> None:

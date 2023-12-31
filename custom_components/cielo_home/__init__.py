@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import logging
-from types import MappingProxyType, MethodType
+from types import MappingProxyType, MethodType  # noqa: F401
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
 from .cielohome import CieloHome

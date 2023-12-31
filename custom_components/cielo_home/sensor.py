@@ -23,12 +23,11 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """c"""
+    """None."""
 
     entities = []
     cw_devices = hass.data[DOMAIN][config_entry.entry_id + "_devices"]
     for device in cw_devices:
-
         entity = CieloHomeSensorEntity(
             device,
             "Temperature",
@@ -66,7 +65,7 @@ async def async_setup_entry(
 
 
 class CieloHomeSensorEntity(CieloHomeEntity, SensorEntity):
-    """c"""
+    """None."""
 
     _attr_has_entity_name = True
 
@@ -83,7 +82,7 @@ class CieloHomeSensorEntity(CieloHomeEntity, SensorEntity):
         attr_type: type,
         options,
     ) -> None:
-        """c"""
+        """None."""
         super().__init__(device, name, unique_id)
         self._device = device
         self._attr_native_unit_of_measurement = unit
@@ -100,7 +99,7 @@ class CieloHomeSensorEntity(CieloHomeEntity, SensorEntity):
         self._device.add_listener(self)
 
     def _update_internal_state(self):
-        """c"""
+        """None."""
         value = cast(self._attr_type, getattr(self._device, self._attr_value)())
         if value != self._attr_native_value:
             self._attr_native_value = value

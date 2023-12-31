@@ -1,5 +1,7 @@
-"""c"""
+"""None."""
 import asyncio
+from collections.abc import Awaitable
+import contextlib
 import copy
 from datetime import datetime
 import json
@@ -21,7 +23,7 @@ TIME_REFRESH_TOKEN = 3300
 TIMER_PING = 900
 
 # TIME_REFRESH_TOKEN = 20
-# TIMER_PING = 5
+# TIMER_PING = 10
 
 
 class CieloHome:
@@ -51,6 +53,7 @@ class CieloHome:
         self._reconnect_now = False
         self._hass: HomeAssistant = hass
         self._entry: ConfigEntry = entry
+        self._appliance_id = None
         self._headers = {
             "content-type": "application/json; charset=UTF-8",
             "referer": URL_CIELO,
@@ -59,17 +62,17 @@ class CieloHome:
         }
 
     async def close(self):
-        """C"""
+        """None."""
         self._stop_running = True
         self._is_running = False
         await asyncio.sleep(0.5)
 
     def add_listener(self, listener: object):
-        """C"""
+        """None."""
         self.__event_listener.append(listener)
 
     async def set_x_api_key(self) -> bool:
-        """Get the x_api_key"""
+        """Get the x_api_key."""
         login_url = URL_CIELO
         main_js_url = ""
         async with ClientSession() as session:
@@ -85,7 +88,7 @@ class CieloHome:
                 main_js_url = html_text[index + 5 : index2].replace('"', "")
 
         if main_js_url != "":
-            async with ClientSession() as session:
+            async with ClientSession() as session:  # noqa: SIM117
                 async with session.get(
                     login_url + main_js_url + "?t=" + str(self.get_ts())
                 ) as resp:
@@ -113,7 +116,7 @@ class CieloHome:
         self._user_id = user_id
 
         if self._access_token != "":
-            asyncio.create_task(self.async_connect_wss())
+            create_task_log_exception(self.async_connect_wss())
 
         self._last_refresh_token_ts = self.get_ts()
         self.start_timer_refreshtoken()
@@ -121,12 +124,12 @@ class CieloHome:
         return True
 
     def start_timer_refreshtoken(self):
-        """C"""
+        """None."""
         self._timer_refresh = Timer(60, self.refresh_token)
         self._timer_refresh.start()  # Here run is called
 
     def refresh_token(self):
-        """C"""
+        """None."""
 
         self.start_timer_refreshtoken()
         if (self.get_ts() - self._last_refresh_token_ts) > TIME_REFRESH_TOKEN:
@@ -170,7 +173,7 @@ class CieloHome:
             self._user_id = user_id
 
         self._headers["authorization"] = self._access_token
-        async with ClientSession() as session:
+        async with ClientSession() as session:  # noqa: SIM117
             async with session.get(
                 "https://"
                 + URL_API
@@ -201,7 +204,7 @@ class CieloHome:
         return False
 
     async def async_connect_wss(self, update_state: bool = False):
-        """C"""
+        """None."""
         headers_wss = {
             "Host": URL_API_WSS,
             "Cache-control": "no-cache",
@@ -216,7 +219,7 @@ class CieloHome:
         self._stop_running = False
 
         try:
-            async with ClientSession() as ws_session:
+            async with ClientSession() as ws_session:  # noqa: SIM117
                 async with ws_session.ws_connect(
                     wss_uri,
                     headers=headers_wss,
@@ -229,7 +232,7 @@ class CieloHome:
                     self.stop_timer_connection_lost()
 
                     if update_state:
-                        asyncio.create_task(self.update_state_device())
+                        create_task_log_exception(self.update_state_device())
                     self._last_refresh_token_ts = self.get_ts()
                     self.start_timer_ping()
                     while self._is_running:
@@ -256,18 +259,10 @@ class CieloHome:
                             except ValueError:
                                 pass
 
-                            try:
+                            with contextlib.suppress(Exception):
                                 if js_data["message_type"] == "StateUpdate":
                                     for listener in self.__event_listener:
                                         listener.data_receive(js_data)
-                            except Exception:
-                                try:
-                                    if js_data["message"] == "Internal server error":
-                                        _LOGGER.debug(
-                                            "Receive error : %s", json.dumps(debug_data)
-                                        )
-                                except Exception:
-                                    pass
 
                         except asyncio.exceptions.TimeoutError:
                             pass
@@ -283,13 +278,18 @@ class CieloHome:
                         try:
                             while len(self._msg_to_send) > 0:
                                 msg = self._msg_to_send.pop(0)
-                                if _LOGGER.isEnabledFor(logging.DEBUG):
-                                    debug_data = copy.copy(msg)
-                                    debug_data["token"] = "*****"
-                                    _LOGGER.debug(
-                                        "Send Json : %s", json.dumps(debug_data)
-                                    )
-                                await self._websocket.send_json(msg)
+                                if msg == "ping":
+                                    await self._websocket.send_str(msg)
+                                else:
+                                    if _LOGGER.isEnabledFor(logging.DEBUG):
+                                        debug_data = copy.copy(msg)
+                                        debug_data["token"] = "*****"
+                                        _LOGGER.debug(
+                                            "Send Json : %s", json.dumps(debug_data)
+                                        )
+
+                                    await self._websocket.send_json(msg)
+
                                 msg = None
                         except Exception:
                             _LOGGER.error("Failed to send Json")
@@ -319,10 +319,10 @@ class CieloHome:
                 await asyncio.sleep(TIMEOUT_RECONNECT)
             else:
                 _LOGGER.debug("Reconnection")
-            asyncio.create_task(self.async_connect_wss(True))
+            create_task_log_exception(self.async_connect_wss(True))
 
     def send_action(self, msg) -> None:
-        """C"""
+        """None."""
         msg["token"] = self._access_token
         msg["mid"] = self._session_id
         msg["ts"] = self.get_ts()
@@ -336,37 +336,37 @@ class CieloHome:
         self.send_json(msg)
 
     def start_timer_ping(self):
-        """C"""
+        """None."""
         self._timer_ping = Timer(TIMER_PING, self.send_ping)
         self._timer_ping.start()  # Here run is called
 
     def start_timer_connection_lost(self):
-        """C"""
+        """None."""
         self._timer_connection_lost = Timer(
             TIMEOUT_RECONNECT + 2, self.dispatch_connection_lost
         )
         self._timer_connection_lost.start()  # Here run is called
 
     def stop_timer_connection_lost(self):
-        """C"""
+        """None."""
         if self._timer_connection_lost:
             self._timer_connection_lost.cancel()
             self._timer_connection_lost = None
 
     def dispatch_connection_lost(self):
-        """C"""
+        """None."""
         for listener in self.__event_listener:
             listener.lost_connection()
 
     def send_ping(self):
-        """C"""
-        data = {"message": "Ping Connection Reset", "token": self._access_token}
+        """None."""
+        # data = {"message": "Ping Connection Reset", "token": self._access_token}
         self.start_timer_ping()
         _LOGGER.debug("Send Ping Connection Reset")
-        self.send_json(data)
+        self.send_json("ping")
 
     def send_json(self, data):
-        """C"""
+        """None."""
         self._msg_lock.acquire()
         try:
             self._msg_to_send.append(data)
@@ -374,11 +374,11 @@ class CieloHome:
             self._msg_lock.release()
 
     def get_ts(self) -> int:
-        """C"""
-        return int((datetime.utcnow() - datetime.fromtimestamp(0)).total_seconds())
+        """None."""
+        return int((datetime.utcnow() - datetime.fromtimestamp(0)).total_seconds())  # noqa: DTZ003
 
     async def async_get_devices(self):
-        """C"""
+        """None."""
         devices = await self.async_get_thermostats()
 
         appliance_ids = ""
@@ -406,7 +406,7 @@ class CieloHome:
         return []
 
     async def update_state_device(self):
-        """C"""
+        """None."""
         devices = await self.async_get_thermostats()
         for listener in self.__event_listener:
             for device in devices:
@@ -432,7 +432,7 @@ class CieloHome:
 
         self._headers["authorization"] = self._access_token
         devices = None
-        async with ClientSession() as session:
+        async with ClientSession() as session:  # noqa: SIM117
             async with session.get(
                 "https://" + URL_API + "/web/devices?limit=420",
                 headers=self._headers,
@@ -451,7 +451,7 @@ class CieloHome:
         if devices is not None:
             for device in devices:
                 try:
-                    appliance_id: str = str(device["applianceId"])
+                    self._appliance_id: str = str(device["applianceId"])
                     devices_supported.append(device)
                 except Exception:
                     continue
@@ -462,7 +462,7 @@ class CieloHome:
         """Get de the list Devices/Thermostats."""
         # https://api.smartcielo.com/web/sync/appliances/1?applianceIdList=[785]&
         self._headers["authorization"] = self._access_token
-        async with ClientSession() as session:
+        async with ClientSession() as session:  # noqa: SIM117
             async with session.get(
                 "https://"
                 + URL_API
@@ -481,3 +481,15 @@ class CieloHome:
                 else:
                     pass
         return []
+
+
+def create_task_log_exception(awaitable: Awaitable) -> asyncio.Task:
+    """None."""
+
+    async def _log_exception(awaitable):
+        try:
+            return await awaitable
+        except Exception as e:
+            _LOGGER.exception(e)
+
+    return asyncio.create_task(_log_exception(awaitable))

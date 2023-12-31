@@ -1,4 +1,4 @@
-"""c"""
+"""None."""
 from homeassistant.components.climate import HVACMode
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
@@ -15,11 +15,10 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """c"""
+    """None."""
     entities = []
     cw_devices = hass.data[DOMAIN][config_entry.entry_id + "_devices"]
     for device in cw_devices:
-
         if device.get_fan_modes() is not None:
             entity_fan = CieloHomeFanSelect(device)
             entities.append(entity_fan)
@@ -43,7 +42,7 @@ class CieloHomeFanSelect(CieloHomeEntity, SelectEntity):
     """Representation of a select entity."""
 
     def __init__(self, device: CieloHomeDevice) -> None:
-        """c"""
+        """None."""
         super().__init__(
             device,
             device.get_name() + " " + "Fan",
@@ -55,7 +54,7 @@ class CieloHomeFanSelect(CieloHomeEntity, SelectEntity):
         self._device.add_listener(self)
 
     def _update_internal_state(self):
-        """c"""
+        """None."""
         self._attr_current_option = self._device.get_fan_mode()
 
     def select_option(self, option: str) -> None:
@@ -67,7 +66,7 @@ class CieloHomeSwingSelect(CieloHomeEntity, SelectEntity):
     """Representation of a select entity."""
 
     def __init__(self, device: CieloHomeDevice) -> None:
-        """c"""
+        """None."""
         super().__init__(
             device, device.get_name() + " " + "Swing", device.get_uniqueid() + "_swing"
         )
@@ -77,7 +76,7 @@ class CieloHomeSwingSelect(CieloHomeEntity, SelectEntity):
         self._device.add_listener(self)
 
     def _update_internal_state(self):
-        """c"""
+        """None."""
         self._attr_current_option = self._device.get_swing_mode()
 
     def select_option(self, option: str) -> None:
@@ -89,7 +88,7 @@ class CieloHomePresetSelect(CieloHomeEntity, SelectEntity):
     """Representation of a select entity."""
 
     def __init__(self, device: CieloHomeDevice) -> None:
-        """c"""
+        """None."""
         super().__init__(
             device,
             device.get_name() + " " + "Preset",
@@ -101,7 +100,7 @@ class CieloHomePresetSelect(CieloHomeEntity, SelectEntity):
         self._device.add_listener(self)
 
     def _update_internal_state(self):
-        """c"""
+        """None."""
         self._attr_current_option = self._device.get_preset_mode()
         self._attr_available = self._device.get_status() and (
             self._device.get_hvac_mode() == HVACMode.HEAT
@@ -117,7 +116,7 @@ class CieloHomeHvacSelect(CieloHomeEntity, SelectEntity):
     """Representation of a select entity."""
 
     def __init__(self, device: CieloHomeDevice) -> None:
-        """c"""
+        """None."""
         super().__init__(
             device,
             device.get_name() + " " + "Hvac",
@@ -129,7 +128,7 @@ class CieloHomeHvacSelect(CieloHomeEntity, SelectEntity):
         self._device.add_listener(self)
 
     def _update_internal_state(self):
-        """c"""
+        """None."""
         self._attr_current_option = self._device.get_hvac_mode()
 
     def select_option(self, option: str) -> None:

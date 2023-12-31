@@ -141,7 +141,7 @@ class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
         fan_speed: str = "",
         swing: str = "",
     ) -> None:
-        """sync_ac_state"""
+        """Sync_ac_state."""
         self._device.sync_ac_state(power, temp, mode, fan_speed, swing)
 
     def set_swing_mode(self, swing_mode: str) -> None:

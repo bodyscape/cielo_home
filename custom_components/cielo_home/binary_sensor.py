@@ -1,4 +1,4 @@
-"""c"""
+"""None."""
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
@@ -19,7 +19,7 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """c"""
+    """None."""
     entities = []
     cw_devices = hass.data[DOMAIN][config_entry.entry_id + "_devices"]
     for device in cw_devices:
@@ -33,7 +33,7 @@ class CieloHomeStatusBinarySensor(CieloHomeEntity, BinarySensorEntity):
     """Representation of ADS binary sensors."""
 
     def __init__(self, device: CieloHomeDevice) -> None:
-        """c"""
+        """None."""
         super().__init__(
             device,
             device.get_name() + " " + "Status",
@@ -45,5 +45,5 @@ class CieloHomeStatusBinarySensor(CieloHomeEntity, BinarySensorEntity):
         self._device.add_listener(self)
 
     def _update_internal_state(self):
-        """c"""
+        """None."""
         self._attr_is_on = self._device.get_status()

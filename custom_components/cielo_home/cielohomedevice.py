@@ -1,4 +1,5 @@
 """The Cielo Home integration."""
+import contextlib
 import logging
 from threading import Lock, Timer
 import time
@@ -73,19 +74,19 @@ class CieloHomeDevice:
         #    pass
 
     def add_listener(self, listener: object) -> None:
-        """c"""
+        """None."""
         self.__event_listener.append(listener)
 
     def send_power_on(self) -> None:
-        """c"""
+        """None."""
         self._send_power("on")
 
     def send_power_off(self) -> None:
-        """c"""
+        """None."""
         self._send_power("off")
 
     def _send_power(self, value) -> None:
-        """c"""
+        """None."""
         if self._device["latestAction"]["power"] == value:
             return
 
@@ -97,7 +98,7 @@ class CieloHomeDevice:
     def sync_ac_state(
         self, power: bool, temp: int, mode: str, fan_speed: str, swing: str
     ) -> None:
-        """c"""
+        """None."""
         action = {
             "power": "on" if power else "off",
             "temp": temp
@@ -116,15 +117,15 @@ class CieloHomeDevice:
         self._send_msg(action, "", "", default_action="syncState")
 
     def send_light_on(self) -> None:
-        """c"""
+        """None."""
         self._send_light("on")
 
     def send_light_off(self) -> None:
-        """c"""
+        """None."""
         self._send_light("off")
 
     def _send_light(self, value) -> None:
-        """c"""
+        """None."""
         # if self._device["latestAction"]["light"] == value:
         #     return
 
@@ -134,15 +135,15 @@ class CieloHomeDevice:
         self._send_msg(action, "light", "on/off")
 
     def send_turbo_on(self) -> None:
-        """c"""
+        """None."""
         self._send_turbo("on")
 
     def send_turbo_off(self) -> None:
-        """c"""
+        """None."""
         self._send_turbo("off")
 
     def _send_turbo(self, value) -> None:
-        """c"""
+        """None."""
         if self._device["latestAction"]["turbo"] == value:
             return
 
@@ -154,7 +155,6 @@ class CieloHomeDevice:
     def _send_msg(
         self, action, action_type, action_value, default_action="actionControl"
     ) -> None:
-
         msg = {
             "action": default_action,
             "macAddress": self.get_mac_address(),
@@ -185,27 +185,27 @@ class CieloHomeDevice:
         # self._api.send_action(msg)
 
     def send_mode_heat(self) -> None:
-        """c"""
+        """None."""
         self._send_mode("heat")
 
     def send_mode_cool(self) -> None:
-        """c"""
+        """None."""
         self._send_mode("cool")
 
     def send_mode_dry(self) -> None:
-        """c"""
+        """None."""
         self._send_mode("dry")
 
     def send_mode_auto(self) -> None:
-        """c"""
+        """None."""
         self._send_mode("auto")
 
     def send_mode_fan(self) -> None:
-        """c"""
+        """None."""
         self._send_mode("fan")
 
     def send_mode_freezepoint(self) -> None:
-        """c"""
+        """None."""
         if self.get_hvac_mode() != HVACMode.HEAT:
             self.send_mode_heat()
             time.sleep(2)
@@ -213,7 +213,7 @@ class CieloHomeDevice:
         self._send_mode("freezepoint")
 
     def _send_mode(self, value) -> None:
-        """c"""
+        """None."""
         if self.get_power() == "off":
             self.send_power_on()
             time.sleep(2)
@@ -229,23 +229,23 @@ class CieloHomeDevice:
         self._send_msg(action, "mode", value)
 
     def send_fan_speed_medium(self) -> None:
-        """c"""
+        """None."""
         self._send_fan_speed(FAN_MEDIUM_VALUE)
 
     def send_fan_speed_high(self) -> None:
-        """c"""
+        """None."""
         self._send_fan_speed(FAN_HIGH_VALUE)
 
     def send_fan_speed_low(self) -> None:
-        """c"""
+        """None."""
         self._send_fan_speed(FAN_LOW_VALUE)
 
     def send_fan_speed_auto(self) -> None:
-        """c"""
+        """None."""
         self._send_fan_speed(FAN_AUTO_VALUE)
 
     def _send_fan_speed(self, value) -> None:
-        """c"""
+        """None."""
         if self._device["latestAction"]["fanspeed"] == value:
             return
 
@@ -255,15 +255,15 @@ class CieloHomeDevice:
         self._send_msg(action, "fanspeed", action["fanspeed"])
 
     def send_follow_me_on(self) -> None:
-        """c"""
+        """None."""
         self.send_follow_me(FOLLOW_ME_ON)
 
     def send_follow_me_off(self) -> None:
-        """c"""
+        """None."""
         self.send_follow_me(FOLLOW_ME_OFF)
 
     def send_follow_me(self, value) -> None:
-        """c"""
+        """None."""
         if self._device["latestAction"]["followme"] == value:
             return
 
@@ -273,43 +273,43 @@ class CieloHomeDevice:
         self._send_msg(action, "followme", action["followme"])
 
     def send_swing_adjust(self) -> None:
-        """c"""
+        """None."""
         self._send_swing(SWING_ADJUST_VALUE)
 
     def send_swing_auto(self) -> None:
-        """c"""
+        """None."""
         self._send_swing(SWING_AUTO_VALUE)
 
     def send_swing_auto_stop(self) -> None:
-        """c"""
+        """None."""
         self._send_swing(SWING_AUTO_STOP_VALUE)
 
     def send_swing_pos1(self) -> None:
-        """c"""
+        """None."""
         self._send_swing(SWING_POSITION1_VALUE)
 
     def send_swing_pos2(self) -> None:
-        """c"""
+        """None."""
         self._send_swing(SWING_POSITION2_VALUE)
 
     def send_swing_pos3(self) -> None:
-        """c"""
+        """None."""
         self._send_swing(SWING_POSITION3_VALUE)
 
     def send_swing_pos4(self) -> None:
-        """c"""
+        """None."""
         self._send_swing(SWING_POSITION4_VALUE)
 
     def send_swing_pos5(self) -> None:
-        """c"""
+        """None."""
         self._send_swing(SWING_POSITION5_VALUE)
 
     def send_swing_pos6(self) -> None:
-        """c"""
+        """None."""
         self._send_swing(SWING_POSITION6_VALUE)
 
     def _send_swing(self, value) -> None:
-        """c"""
+        """None."""
         if self._device["latestAction"]["swing"] == value:
             return
 
@@ -319,7 +319,7 @@ class CieloHomeDevice:
         self._send_msg(action, "swing", action["swing"])
 
     def send_temperature(self, value) -> None:
-        """c"""
+        """None."""
         if int(self._device["latestAction"]["temp"]) == int(value):
             return
 
@@ -329,195 +329,177 @@ class CieloHomeDevice:
         self._send_msg(action, "temp", value)
 
     def get_current_temperature(self) -> float:
-        """c"""
+        """None."""
         return float(self._device["latEnv"]["temp"])
 
     def get_humidity(self) -> float:
-        """c"""
+        """None."""
         return self._device["latEnv"]["humidity"]
 
     def get_is_device_fahrenheit(self) -> bool:
-        """c"""
+        """None."""
         return self._device["isFaren"] == 1
 
     def get_is_appliance_fahrenheit(self) -> bool:
-        """c"""
+        """None."""
         return self._device["appliance"]["isFaren"] == 1
 
     def get_temp_increment(self) -> float:
-        """c"""
+        """None."""
         return self._device["appliance"]["tempIncrement"]
 
     def get_available_modes(self) -> str:
-        """c"""
+        """None."""
         return self._device["appliance"]["mode"]
 
     def get_available_fan_modes(self) -> str:
-        """c"""
+        """None."""
         return self._device["appliance"]["fan"]
 
     def get_available_swing_modes(self) -> str:
-        """c"""
-        try:
+        """None."""
+        with contextlib.suppress(KeyError):
             return self._device["appliance"]["swing"]
-        except KeyError:
-            pass
 
     def get_is_available_swing_modes(self) -> bool:
-        """c"""
-        try:
+        """None."""
+        with contextlib.suppress(KeyError):
             return self.get_available_swing_modes() != ""
-        except KeyError:
-            pass
 
     def get_is_appliance_is_freezepoin_display(self) -> bool:
-        """c"""
-        try:
+        """None."""
+        with contextlib.suppress(KeyError):
             return self._device["appliance"]["isFreezepointDisplay"] == 1
-        except KeyError:
-            pass
 
     def get_is_light_mode(self) -> bool:
-        """c"""
+        """None."""
         try:
             return self._device["appliance"]["isDisplayLight"] == 1
         except KeyError:
             pass
 
     def get_is_turbo_mode(self) -> bool:
-        """c"""
-        try:
+        """None."""
+        with contextlib.suppress(KeyError):
             return self._device["appliance"]["turbo"] != ""
-        except KeyError:
-            pass
 
         return False
 
     def get_is_followme_mode(self) -> bool:
-        """c"""
-        try:
+        """None."""
+        with contextlib.suppress(KeyError):
             return self._device["appliance"]["followme"] != ""
-        except KeyError:
-            pass
 
         return False
 
     def get_range_temp(self) -> str:
-        """c"""
+        """None."""
         return self._device["appliance"]["temp"]
 
     def get_uniqueid(self):
-        """c"""
+        """None."""
         return self.get_mac_address()
 
     def get_mac_address(self) -> str:
-        """c"""
+        """None."""
         return self._device["macAddress"]
 
     def get_name(self) -> str:
-        """c"""
+        """None."""
         return self._device["deviceName"]
 
     def get_version(self) -> str:
-        """c"""
+        """None."""
         return self._device["fwVersion"]
 
     def get_device_type_version(self) -> str:
-        """c"""
+        """None."""
         return self._device["deviceTypeVersion"]
 
     def get_device_type(self) -> str:
-        """c"""
+        """None."""
         return self._device["deviceType"]
 
     def get_fw_version(self) -> str:
-        """c"""
+        """None."""
         return self._device["fwVersion"]
 
     def get_appliance_id(self) -> int:
-        """c"""
+        """None."""
         return self._device["applianceId"]
 
     def get_my_rule_configuration(self) -> any:
-        """c"""
-        try:
+        """None."""
+        with contextlib.suppress(KeyError):
             return self._device["myRuleConfiguration"]
-        except KeyError:
-            pass
         return {}
 
     def get_connection_source(self) -> int:
-        """c"""
+        """None."""
         return self._device["connectionSource"]
 
     def get_appliance_type(self) -> str:
-        """c"""
+        """None."""
         return self._device["applianceType"]
 
     def get_device(self):
-        """c"""
+        """None."""
         return self._device
 
     def get_mode(self) -> str:
-        """c"""
+        """None."""
         return self._device["latestAction"]["mode"]
 
     def get_power(self) -> str:
-        """c"""
+        """None."""
         return self._device["latestAction"]["power"]
-    
+
     def get_follow_me(self) -> str:
-        """c"""
+        """None."""
         return self._device["latestAction"]["followme"]
 
     def get_light(self) -> str:
-        """c"""
-        try:
+        """None."""
+        with contextlib.suppress(KeyError):
             return (
                 "off"
                 if self._device["latestAction"]["light"] == "on/off"
                 else self._device["latestAction"]["light"]
             )
-        except KeyError:
-            pass
 
         return ""
 
     def get_target_temperature(self) -> float:
-        """c"""
+        """None."""
         return float(self._device["latestAction"]["temp"])
 
     def get_turbo(self) -> str:
-        """c"""
-        try:
+        """None."""
+        with contextlib.suppress(KeyError):
             return self._device["latestAction"]["turbo"]
-        except KeyError:
-            pass
 
         return "off"
 
     def get_fanspeed(self) -> str:
-        """c"""
+        """None."""
         return self._device["latestAction"]["fanspeed"]
 
     def get_swing(self) -> str:
-        """c"""
-        try:
+        """None."""
+        with contextlib.suppress(KeyError):
             return self._device["latestAction"]["swing"]
-        except KeyError:
-            pass
         return ""
 
     def get_status(self) -> bool:
-        """c"""
-        return self._device["deviceStatus"] == 1
+        """None."""
+        return self._device["deviceStatus"] == 1 or self._device["deviceStatus"] == "on"
 
     def get_status_str(self) -> str:
-        """c"""
+        """None."""
         return "on" if self.get_status() else "off"
 
     def _get_action(self) -> object:
-        """c"""
+        """None."""
         action = {
             "power": self._device["latestAction"]["power"],
             "mode": self._device["latestAction"]["mode"],
@@ -526,10 +508,8 @@ class CieloHomeDevice:
             "swing": self._device["latestAction"]["swing"],
         }
 
-        try:
+        with contextlib.suppress(KeyError):
             action["turbo"] = self._device["latestAction"]["turbo"]
-        except KeyError:
-            pass
 
         try:
             action["light"] = (
@@ -540,15 +520,13 @@ class CieloHomeDevice:
         except KeyError:
             action["light"] = "off"
 
-        try:
+        with contextlib.suppress(KeyError):
             action["followme"] = self._device["latestAction"]["followme"]
-        except KeyError:
-            pass
 
         return action
 
     def get_fan_modes(self) -> list[str]:
-        """c"""
+        """None."""
         modes = self.get_available_fan_modes()
         modes_list = modes.split(":")
         fan_modes: list = []
@@ -568,8 +546,8 @@ class CieloHomeDevice:
         return None
 
     def get_max_temp(self) -> float:
-        """c"""
-        try:
+        """None."""
+        with contextlib.suppress(Exception):
             range_temp: str = self.get_range_temp()
             device_unit: str = self.get_unit_of_temperature_appliance()
             range_temps: list = range_temp.split(":")
@@ -577,14 +555,12 @@ class CieloHomeDevice:
             return self.get_adjust_temp(
                 self.get_unit_of_temperature(), device_unit, int(range_temps[1])
             )
-        except Exception:
-            pass
 
         return -1
 
     def get_min_temp(self) -> float:
-        """c"""
-        try:
+        """None."""
+        with contextlib.suppress(Exception):
             range_temp: str = self.get_range_temp()
             device_unit: str = self.get_unit_of_temperature_appliance()
 
@@ -593,8 +569,6 @@ class CieloHomeDevice:
             return self.get_adjust_temp(
                 self.get_unit_of_temperature(), device_unit, int(range_temps[0])
             )
-        except Exception:
-            pass
 
         return -1
 
@@ -616,7 +590,7 @@ class CieloHomeDevice:
             return temp
 
     def get_fan_mode(self) -> str:
-        """c"""
+        """None."""
         if self.get_fanspeed() == "auto":
             return FAN_AUTO
         elif self.get_fanspeed() == "low":
@@ -629,7 +603,7 @@ class CieloHomeDevice:
             return FAN_AUTO
 
     def get_hvac_mode(self) -> str:
-        """c"""
+        """None."""
         if self.get_power() == "off":
             return HVACMode.OFF
         elif self.get_mode() == "auto":
@@ -646,7 +620,7 @@ class CieloHomeDevice:
             return HVACMode.OFF
 
     def get_hvac_modes(self) -> list[str]:
-        """c"""
+        """None."""
         modes: str = self.get_available_modes()
         modes_list: list = modes.split(":")
         hvac_modes: list = [HVACMode.OFF]
@@ -670,7 +644,7 @@ class CieloHomeDevice:
         return None
 
     def get_swing_mode(self) -> str:
-        """c"""
+        """None."""
         if self.get_swing() == "auto":
             return SWING_AUTO
         elif self.get_swing() == "adjust":
@@ -693,7 +667,7 @@ class CieloHomeDevice:
             pass
 
     def get_swing_modes(self) -> list[str]:
-        """c"""
+        """None."""
         modes = self.get_available_swing_modes()
         if modes is not None:
             modes_list = modes.split(":")
@@ -726,21 +700,21 @@ class CieloHomeDevice:
         return None
 
     def get_preset_mode(self) -> str:
-        """c"""
+        """None."""
         if self.get_turbo() == "on":
             return PRESET_TURBO
         else:
             return PRESET_NONE
 
     def get_preset_modes(self) -> list[str]:
-        """c"""
+        """None."""
         if self.get_is_turbo_mode():
             return PRESET_MODES
         else:
             return None
 
     def get_unit_of_temperature(self) -> str:
-        """c"""
+        """None."""
         return (
             UnitOfTemperature.FAHRENHEIT
             if self.get_is_device_fahrenheit()
@@ -748,7 +722,7 @@ class CieloHomeDevice:
         )
 
     def get_unit_of_temperature_appliance(self) -> str:
-        """c"""
+        """None."""
         return (
             UnitOfTemperature.FAHRENHEIT
             if self.get_is_appliance_fahrenheit()
@@ -756,7 +730,7 @@ class CieloHomeDevice:
         )
 
     def send_hvac_mode(self, hvac_mode: HVACMode) -> None:
-        """c"""
+        """None."""
         if hvac_mode == HVACMode.OFF:
             self.send_power_off()
         elif hvac_mode == HVACMode.AUTO:
@@ -773,14 +747,14 @@ class CieloHomeDevice:
             pass
 
     def send_preset_mode(self, preset_mode: str) -> None:
-        """c"""
-        if PRESET_TURBO == preset_mode:
+        """None."""
+        if preset_mode == PRESET_TURBO:
             self.send_turbo_on()
         else:
             self.send_turbo_off()
 
     def send_swing_mode(self, swing_mode: str) -> None:
-        """c"""
+        """None."""
         if swing_mode == SWING_AUTO:
             self.send_swing_auto()
         elif swing_mode == SWING_AUTO_STOP:
@@ -803,7 +777,7 @@ class CieloHomeDevice:
             pass
 
     def send_fan_mode(self, fan_mode: str) -> None:
-        """c"""
+        """None."""
         if fan_mode == FAN_AUTO:
             self.send_fan_speed_auto()
         elif fan_mode == FAN_HIGH:
@@ -816,51 +790,46 @@ class CieloHomeDevice:
             pass
 
     def data_receive(self, data) -> None:
-        """c"""
+        """None."""
         if data["mac_address"] == self.get_mac_address():
             self._device["latEnv"]["temp"] = data["lat_env_var"]["temperature"]
             self._device["latEnv"]["humidity"] = data["lat_env_var"]["humidity"]
-            self._device["deviceStatus"] = data["device_status"]
+            if data["device_status"] == 0 and data["action"]["device_status"] == "on":
+                self._device["deviceStatus"] = 1
+            else:
+                self._device["deviceStatus"] = data["device_status"]
             self._device["latestAction"]["temp"] = data["action"]["temp"]
             self._device["latestAction"]["fanspeed"] = data["action"]["fanspeed"]
             self._device["latestAction"]["mode"] = data["action"]["mode"]
             self._device["latestAction"]["power"] = data["action"]["power"]
             self._old_power = self._device["latestAction"]["power"]
 
-            try:
+            with contextlib.suppress(KeyError):
                 self._device["latestAction"]["swing"] = data["action"]["swing"]
-            except KeyError:
-                pass
 
-            try:
+            with contextlib.suppress(KeyError):
                 self._device["latestAction"]["turbo"] = data["action"]["turbo"]
-            except KeyError:
-                pass
 
-            try:
+            with contextlib.suppress(KeyError):
                 self._device["latestAction"]["light"] = data["action"]["light"]
-            except KeyError:
-                pass
 
-            try:
+            with contextlib.suppress(KeyError):
                 self._device["latestAction"]["followme"] = data["action"]["followme"]
-            except KeyError:
-                pass
 
-            # self.dispatch_state_timer()
-            self.dispatch_state_updated()
+            self.dispatch_state_timer()
+            # self.dispatch_state_updated()
 
     def state_device_receive(self, device_state):
-        """c"""
+        """None."""
         device_state["appliance"] = self._device["appliance"]
         self._device = device_state
         self.dispatch_state_timer()
 
     def dispatch_state_timer(self):
-        """c"""
+        """None."""
         self._timer_lock.acquire()
         try:
-            if self._timer_state_update.is_alive():
+            with contextlib.suppress(Exception):
                 self._timer_state_update.cancel()
 
             self._timer_state_update = Timer(1, self.dispatch_state_updated)
@@ -869,11 +838,11 @@ class CieloHomeDevice:
             self._timer_lock.release()
 
     def dispatch_state_updated(self):
-        """c"""
+        """None."""
         for listener in self.__event_listener:
             listener.state_updated()
 
     def lost_connection(self):
-        """c"""
+        """None."""
         self._device["deviceStatus"] = 0
         self.dispatch_state_timer()

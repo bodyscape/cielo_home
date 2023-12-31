@@ -1,4 +1,4 @@
-"""c"""
+"""None."""
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -16,7 +16,7 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """c"""
+    """None."""
     entities = []
     cw_devices = hass.data[DOMAIN][config_entry.entry_id + "_devices"]
     for device in cw_devices:
@@ -28,10 +28,10 @@ async def async_setup_entry(
 
 
 class CieloHomeButton(CieloHomeEntity, ButtonEntity):
-    """Set up CieloHomeButton"""
+    """Set up CieloHomeButton."""
 
     def __init__(self, device: CieloHomeDevice) -> None:
-        """c"""
+        """None."""
         super().__init__(
             device,
             device.get_name() + " " + "Light",

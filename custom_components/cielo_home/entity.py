@@ -1,4 +1,4 @@
-"""c"""
+"""None."""
 
 from homeassistant.helpers.entity import DeviceInfo, Entity
 
@@ -7,7 +7,7 @@ from .const import DOMAIN
 
 
 class CieloHomeEntity(Entity):
-    """c"""
+    """None."""
 
     def __init__(self, device: CieloHomeDevice, name: str, unique_id: str) -> None:
         """Initialize a CieloHomeEntity."""
@@ -31,7 +31,7 @@ class CieloHomeEntity(Entity):
         raise NotImplementedError()
 
     def state_updated(self) -> None:
-        """c"""
+        """None."""
         self._attr_available = self._device.get_status()
         self._update_internal_state()
         self.schedule_update_ha_state(False)

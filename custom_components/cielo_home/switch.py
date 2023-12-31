@@ -1,11 +1,11 @@
-"""c"""
+"""None."""
 from typing import Any
 
+from homeassistant.components.climate import HVACMode
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.components.climate import HVACMode
 
 from .cielohomedevice import CieloHomeDevice
 from .const import DOMAIN
@@ -17,7 +17,7 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """c"""
+    """None."""
     entities = []
     cw_devices = hass.data[DOMAIN][config_entry.entry_id + "_devices"]
     for device in cw_devices:
@@ -51,7 +51,7 @@ class CieloHomeSwitchFreezingPoint(CieloHomeEntity, SwitchEntity):
     """Representation of a Bond generic device."""
 
     def __init__(self, device: CieloHomeDevice, name, unique_id) -> None:
-        """c"""
+        """None."""
         super().__init__(device, device.get_name() + " " + name, unique_id)
         self._attr_is_on = self.is_freezepoint_on()
         self._attr_icon = "mdi:snowflake-thermometer"
@@ -68,11 +68,11 @@ class CieloHomeSwitchFreezingPoint(CieloHomeEntity, SwitchEntity):
         self._update_internal_state()
 
     def is_freezepoint_on(self, **kwargs: Any) -> bool:
-        """s"""
+        """None."""
         return self._device.get_mode() == "freezepoint"
 
     def _update_internal_state(self):
-        """c"""
+        """None."""
         self._attr_is_on = self.is_freezepoint_on()
 
 
@@ -80,7 +80,7 @@ class CieloHomeSwitchPower(CieloHomeEntity, SwitchEntity):
     """Representation of a Bond generic device."""
 
     def __init__(self, device: CieloHomeDevice, name, unique_id) -> None:
-        """c"""
+        """None."""
         super().__init__(device, device.get_name() + " " + name, unique_id)
         self._attr_is_on = self.is_power_on()
         self._attr_icon = "mdi:power"
@@ -97,18 +97,19 @@ class CieloHomeSwitchPower(CieloHomeEntity, SwitchEntity):
         self._update_internal_state()
 
     def is_power_on(self, **kwargs: Any) -> bool:
-        """s"""
+        """None."""
         return self._device.get_power() == "on"
 
     def _update_internal_state(self):
-        """c"""
+        """None."""
         self._attr_is_on = self.is_power_on()
+
 
 class CieloHomeSwitchFollowMe(CieloHomeEntity, SwitchEntity):
     """Representation of a Bond generic device."""
 
     def __init__(self, device: CieloHomeDevice, name, unique_id) -> None:
-        """c"""
+        """None."""
         super().__init__(device, device.get_name() + " " + name, unique_id)
         self._attr_is_on = self.is_follow_me()
         self._attr_available = self.is_available()
@@ -126,23 +127,28 @@ class CieloHomeSwitchFollowMe(CieloHomeEntity, SwitchEntity):
         self._update_internal_state()
 
     def is_follow_me(self, **kwargs: Any) -> bool:
-        """s"""
+        """None."""
         return self._device.get_follow_me() == "on"
-    
+
     def is_available(self) -> bool:
-        return self._device.get_power() == "on" and self._device.get_hvac_mode() in [HVACMode.HEAT, HVACMode.COOL, HVACMode.AUTO]
+        return self._device.get_power() == "on" and self._device.get_hvac_mode() in [
+            HVACMode.HEAT,
+            HVACMode.COOL,
+            HVACMode.AUTO,
+        ]
 
     def _update_internal_state(self):
-        """c"""
+        """None."""
         self._attr_available = self.is_available()
         self._attr_is_on = self.is_follow_me()
+
 
 # i have no idea why, but call to turn on and off the light is inverted on the cielo app
 # class CieloHomeSwitchLight(CieloHomeEntity, SwitchEntity):
 #     """Representation of a Bond generic device."""
 
 #     def __init__(self, device: CieloHomeDevice, name, unique_id) -> None:
-#         """c"""
+#         """None."""
 #         super().__init__(device, device.get_name() + " " + name, unique_id)
 #         self._attr_is_on = self._device.get_light() == "on"
 #         self._attr_icon = "mdi:lightbulb"
@@ -159,5 +165,5 @@ class CieloHomeSwitchFollowMe(CieloHomeEntity, SwitchEntity):
 #         self._update_internal_state()
 
 #     def _update_internal_state(self):
-#         """c"""
+#         """None."""
 #         self._attr_is_on = self._device.get_light() == "on"
