@@ -20,7 +20,7 @@ _LOGGER = logging.getLogger(__name__)
 
 TIMEOUT_RECONNECT = 10
 TIME_REFRESH_TOKEN = 3300
-TIMER_PING = 900
+TIMER_PING = 840
 
 # TIME_REFRESH_TOKEN = 20
 # TIMER_PING = 10
@@ -49,6 +49,7 @@ class CieloHome:
         self._timer_connection_lost: Timer = None
         self._last_refresh_token_ts: int
         self._last_ts_msg: int = 0
+        self._last_connection_ts: int = 0
         self._x_api_key: str = ""
         self._reconnect_now = False
         self._hass: HomeAssistant = hass
@@ -195,9 +196,9 @@ class CieloHome:
                                 self._hass.config_entries.async_update_entry(
                                     self._entry, data=config_data
                                 )
+                            _LOGGER.debug("Call refreshToken success")
                             await self._websocket.close()
                             self._last_refresh_token_ts = self.get_ts()
-                            _LOGGER.debug("Call refreshToken success")
                         else:
                             _LOGGER.debug("Call test refreshToken success")
                         return True
@@ -229,6 +230,7 @@ class CieloHome:
                 ) as websocket:
                     self._websocket = websocket
                     _LOGGER.info("Connected success")
+                    self._last_connection_ts = self.get_ts()
                     self.stop_timer_connection_lost()
 
                     if update_state:
@@ -242,9 +244,14 @@ class CieloHome:
                                 WSMsgType.CLOSE,
                                 WSMsgType.CLOSED,
                                 WSMsgType.CLOSING,
+                                WSMsgType.ERROR,
                             ):
                                 self._timer_ping.cancel()
                                 _LOGGER.debug("Websocket closed : %s", msg.type)
+                                if (
+                                    self.get_ts() - self._last_connection_ts
+                                ) > TIMEOUT_RECONNECT:
+                                    self._reconnect_now = True
                                 break
 
                             try:
