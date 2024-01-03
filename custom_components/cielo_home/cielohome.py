@@ -235,7 +235,6 @@ class CieloHome:
 
                     if update_state:
                         create_task_log_exception(self.update_state_device())
-                    self._last_refresh_token_ts = self.get_ts()
                     self.start_timer_ping()
                     while self._is_running:
                         try:
@@ -309,7 +308,6 @@ class CieloHome:
                         await asyncio.sleep(0.1)
         except Exception:
             _LOGGER.error(sys.exc_info()[1])
-            self._last_refresh_token_ts = self.get_ts() - TIME_REFRESH_TOKEN
 
         if hasattr(self, "_websocket") and not self._websocket.closed:
             self._timer_ping.cancel()
