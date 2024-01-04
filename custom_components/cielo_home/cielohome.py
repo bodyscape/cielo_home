@@ -55,6 +55,7 @@ class CieloHome:
         self._hass: HomeAssistant = hass
         self._entry: ConfigEntry = entry
         self._appliance_id = None
+        self.background_tasks_wss = set()
         self._headers = {
             "content-type": "application/json; charset=UTF-8",
             "referer": URL_CIELO,
@@ -117,7 +118,7 @@ class CieloHome:
         self._user_id = user_id
 
         if self._access_token != "":
-            create_task_log_exception(self.async_connect_wss())
+            self.create_task_log_exception(self.async_connect_wss())
 
         self._last_refresh_token_ts = self.get_ts()
         self.start_timer_refreshtoken()
@@ -234,7 +235,9 @@ class CieloHome:
                     self.stop_timer_connection_lost()
 
                     if update_state:
-                        create_task_log_exception(self.update_state_device())
+                        self.create_task_log_exception(
+                            self.update_state_device(), False
+                        )
                     self.start_timer_ping()
                     while self._is_running:
                         try:
@@ -275,37 +278,32 @@ class CieloHome:
                         except asyncio.exceptions.CancelledError:
                             pass
 
-                        msg_sent: bool = False
                         msg: object = None
 
                         if len(self._msg_to_send) > 0:
-                            self._msg_lock.acquire()
-                            msg_sent = True
-                        try:
-                            while len(self._msg_to_send) > 0:
-                                msg = self._msg_to_send.pop(0)
-                                if msg == "ping":
-                                    await self._websocket.send_str(msg)
-                                else:
-                                    if _LOGGER.isEnabledFor(logging.DEBUG):
-                                        debug_data = copy.copy(msg)
-                                        debug_data["token"] = "*****"
-                                        _LOGGER.debug(
-                                            "Send Json : %s", json.dumps(debug_data)
-                                        )
+                            with self._msg_lock:
+                                try:
+                                    while len(self._msg_to_send) > 0:
+                                        msg = self._msg_to_send.pop(0)
+                                        if msg == "ping":
+                                            await self._websocket.send_str(msg)
+                                        else:
+                                            if _LOGGER.isEnabledFor(logging.DEBUG):
+                                                debug_data = copy.copy(msg)
+                                                debug_data["token"] = "*****"
+                                                _LOGGER.debug(
+                                                    "Send Json : %s",
+                                                    json.dumps(debug_data),
+                                                )
 
-                                    await self._websocket.send_json(msg)
+                                            await self._websocket.send_json(msg)
 
-                                msg = None
-                        except Exception:
-                            _LOGGER.error("Failed to send Json")
-                            if msg is not None:
-                                self._msg_to_send.insert(0, msg)
-                        finally:
-                            if msg_sent:
-                                self._msg_lock.release()
+                                        msg = None
+                                except Exception:
+                                    _LOGGER.error("Failed to send Json")
+                                    if msg is not None:
+                                        self._msg_to_send.insert(0, msg)
 
-                        await asyncio.sleep(0.1)
         except Exception:
             _LOGGER.error(sys.exc_info()[1])
 
@@ -324,7 +322,7 @@ class CieloHome:
                 await asyncio.sleep(TIMEOUT_RECONNECT)
             else:
                 _LOGGER.debug("Reconnection")
-            create_task_log_exception(self.async_connect_wss(True))
+            self.create_task_log_exception(self.async_connect_wss(True))
 
     def send_action(self, msg) -> None:
         """None."""
@@ -372,11 +370,11 @@ class CieloHome:
 
     def send_json(self, data):
         """None."""
-        self._msg_lock.acquire()
-        try:
-            self._msg_to_send.append(data)
-        finally:
-            self._msg_lock.release()
+        with self._msg_lock:
+            try:
+                self._msg_to_send.append(data)
+            except Exception:
+                _LOGGER.error(sys.exc_info()[1])
 
     def get_ts(self) -> int:
         """None."""
@@ -487,14 +485,23 @@ class CieloHome:
                     pass
         return []
 
+    def create_task_log_exception(
+        self, awaitable: Awaitable, long_running: bool = True
+    ) -> asyncio.Task:
+        """None."""
 
-def create_task_log_exception(awaitable: Awaitable) -> asyncio.Task:
-    """None."""
+        async def _log_exception(awaitable):
+            try:
+                return await awaitable
+            except Exception as e:
+                _LOGGER.exception(e)
 
-    async def _log_exception(awaitable):
-        try:
-            return await awaitable
-        except Exception as e:
-            _LOGGER.exception(e)
+        task = asyncio.create_task(_log_exception(awaitable))
+        if long_running:
+            self.background_tasks_wss.add(task)
+            task.add_done_callback(self.call_back_task)
+        return task
 
-    return asyncio.create_task(_log_exception(awaitable))
+    def call_back_task(self, task: asyncio.Task):
+        """None."""
+        self.background_tasks_wss.remove(task)
