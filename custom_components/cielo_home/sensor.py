@@ -39,8 +39,26 @@ async def async_setup_entry(
             SensorDeviceClass.TEMPERATURE,
             SensorStateClass.MEASUREMENT,
             device.get_uniqueid() + "_temperature",
-            "mdi:thermometer",
+            "mdi:home-thermometer",
             "get_current_temperature",
+            int,
+            None,
+        )
+        entities.append(entity)
+
+        entity = CieloHomeSensorEntity(
+            device,
+            "Target Temperature",
+            (
+                UnitOfTemperature.FAHRENHEIT
+                if device.get_is_device_fahrenheit()
+                else UnitOfTemperature.CELSIUS
+            ),
+            SensorDeviceClass.TEMPERATURE,
+            SensorStateClass.MEASUREMENT,
+            device.get_uniqueid() + "_target_temperature",
+            "mdi:thermometer",
+            "get_target_temperature",
             int,
             None,
         )

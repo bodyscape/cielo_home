@@ -83,7 +83,8 @@ class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
         """Initialize the thermostat."""
         super().__init__(device, device.get_name(), device.get_uniqueid())
         self._attr_target_temperature_step = int(self._device.get_temp_increment())
-        self._attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
+        if self._device.get_supportTargetTemp():
+            self._attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
         self._attr_temperature_unit = self._device.get_unit_of_temperature()
 
         self._attr_hvac_modes = self._device.get_hvac_modes()
@@ -98,9 +99,9 @@ class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
         if self._device.get_is_available_swing_modes():
             self._attr_supported_features |= ClimateEntityFeature.SWING_MODE
 
-        if self._device.get_max_temp() > 0:
+        if self._device.get_supportTargetTemp() and self._device.get_max_temp() > 0:
             self._attr_max_temp = self._device.get_max_temp()
-        if self._device.get_min_temp() > 0:
+        if self._device.get_supportTargetTemp() and self._device.get_min_temp() > 0:
             self._attr_min_temp = self._device.get_min_temp()
 
         self._attr_preset_modes = self._device.get_preset_modes()

@@ -11,6 +11,7 @@ from .cielohome import CieloHome
 from .const import (
     FAN_AUTO,
     FAN_AUTO_VALUE,
+    FAN_FANSPEED_VALUE,
     FAN_HIGH,
     FAN_HIGH_VALUE,
     FAN_LOW,
@@ -190,7 +191,11 @@ class CieloHomeDevice:
 
     def send_mode_cool(self) -> None:
         """None."""
-        self._send_mode("cool")
+        value = "cool"
+        if self.get_available_modes() == "mode":
+            value = "mode"
+
+        self._send_mode(value)
 
     def send_mode_dry(self) -> None:
         """None."""
@@ -218,12 +223,15 @@ class CieloHomeDevice:
             self.send_power_on()
             time.sleep(2)
 
-        if self._device["latestAction"]["mode"] == value and value != "freezepoint":
+        if self._device["latestAction"]["mode"] == value and value not in (
+            "freezepoint",
+            "mode",
+        ):
             return
 
         action = self._get_action()
 
-        action["mode"] = value if value != "freezepoint" else "heat"
+        action["mode"] = value if value not in ("freezepoint") else "heat"
         # action["mode"] = value
         self._device["latestAction"]["mode"] = value
         self._send_msg(action, "mode", value)
@@ -243,6 +251,10 @@ class CieloHomeDevice:
     def send_fan_speed_auto(self) -> None:
         """None."""
         self._send_fan_speed(FAN_AUTO_VALUE)
+
+    def send_fan_speed_rotate(self) -> None:
+        """None."""
+        self._send_fan_speed(FAN_FANSPEED_VALUE)
 
     def _send_fan_speed(self, value) -> None:
         """None."""
@@ -320,13 +332,31 @@ class CieloHomeDevice:
 
     def send_temperature(self, value) -> None:
         """None."""
-        if int(self._device["latestAction"]["temp"]) == int(value):
+        actionValue = value
+        temp = int(self._device["latestAction"]["temp"])
+        if temp == int(value) and self.get_supportTargetTemp():
             return
+
+        if not self.get_supportTargetTemp():
+            if temp < int(value):
+                actionValue = "inc"
+                value = int(value) - 1
+            else:
+                actionValue = "dec"
+                value = int(value) + 1
 
         action = self._get_action()
         action["temp"] = str(value)
         self._device["latestAction"]["temp"] = action["temp"]
-        self._send_msg(action, "temp", value)
+        self._send_msg(action, "temp", actionValue)
+
+    def send_temperatureUp(self) -> None:
+        """None."""
+        self.send_temperature(int(self._device["latestAction"]["temp"]) + 1)
+
+    def send_temperatureDown(self) -> None:
+        """None."""
+        self.send_temperature(int(self._device["latestAction"]["temp"]) - 1)
 
     def get_current_temperature(self) -> float:
         """None."""
@@ -364,7 +394,7 @@ class CieloHomeDevice:
     def get_is_available_swing_modes(self) -> bool:
         """None."""
         with contextlib.suppress(KeyError):
-            return self.get_available_swing_modes() != ""
+            return self.get_available_swing_modes().strip() != ""
 
     def get_is_appliance_is_freezepoin_display(self) -> bool:
         """None."""
@@ -391,6 +421,11 @@ class CieloHomeDevice:
             return self._device["appliance"]["followme"] != ""
 
         return False
+
+    def get_supportTargetTemp(self) -> bool:
+        """None."""
+        if self._device["appliance"]["temp"] == "inc:dec":
+            return False
 
     def get_range_temp(self) -> str:
         """None."""
@@ -518,7 +553,8 @@ class CieloHomeDevice:
                 else self._device["latestAction"]["light"]
             )
         except KeyError:
-            action["light"] = "off"
+            if self.get_available_modes() != "mode":
+                action["light"] = "off"
 
         with contextlib.suppress(KeyError):
             action["followme"] = self._device["latestAction"]["followme"]
@@ -610,7 +646,7 @@ class CieloHomeDevice:
             return HVACMode.AUTO
         elif self.get_mode() == "heat" or self.get_mode() == "freezepoint":
             return HVACMode.HEAT
-        elif self.get_mode() == "cool":
+        elif self.get_mode() == "cool" or self.get_mode() == "mode":
             return HVACMode.COOL
         elif self.get_mode() == "dry":
             return HVACMode.DRY
@@ -622,6 +658,9 @@ class CieloHomeDevice:
     def get_hvac_modes(self) -> list[str]:
         """None."""
         modes: str = self.get_available_modes()
+        if modes == "mode":
+            modes = "cool"
+
         modes_list: list = modes.split(":")
         hvac_modes: list = [HVACMode.OFF]
         for mode in modes_list:
