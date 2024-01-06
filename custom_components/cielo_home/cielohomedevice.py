@@ -386,6 +386,10 @@ class CieloHomeDevice:
         """None."""
         return self._device["appliance"]["fan"]
 
+    def get_is_fan_mode_cycle(self) -> bool:
+        """None."""
+        return self._device["appliance"]["fan"] == "fanspeed"
+
     def get_available_swing_modes(self) -> str:
         """None."""
         with contextlib.suppress(KeyError):
@@ -426,6 +430,8 @@ class CieloHomeDevice:
         """None."""
         if self._device["appliance"]["temp"] == "inc:dec":
             return False
+        else:
+            return True
 
     def get_range_temp(self) -> str:
         """None."""

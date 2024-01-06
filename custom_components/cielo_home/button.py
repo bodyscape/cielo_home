@@ -24,7 +24,7 @@ async def async_setup_entry(
             entity = CieloHomeButtonLight(device)
             entities.append(entity)
 
-        if device.get_available_fan_modes() == "fanspeed":
+        if device.get_is_fan_mode_cycle():
             entity = CieloHomeButtonFan(device)
             entities.append(entity)
 

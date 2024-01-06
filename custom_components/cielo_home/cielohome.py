@@ -219,116 +219,110 @@ class CieloHome:
 
         self._is_running = True
         self._stop_running = False
-        # loop = asyncio.get_event_loop()
         try:
-            # loop.run_forever()
-            pass
-            try:
-                async with ClientSession() as ws_session:  # noqa: SIM117
-                    async with ws_session.ws_connect(
-                        wss_uri,
-                        headers=headers_wss,
-                        params={
-                            "sessionId": self._session_id,
-                            "token": self._access_token,
-                        },
-                        origin=URL_CIELO[:-1],
-                        compress=15,
-                    ) as websocket:
-                        self._websocket = websocket
-                        _LOGGER.info("Connected success")
-                        self._last_connection_ts = self.get_ts()
-                        self.stop_timer_connection_lost()
+            async with ClientSession() as ws_session:  # noqa: SIM117
+                async with ws_session.ws_connect(
+                    wss_uri,
+                    headers=headers_wss,
+                    params={
+                        "sessionId": self._session_id,
+                        "token": self._access_token,
+                    },
+                    origin=URL_CIELO[:-1],
+                    compress=15,
+                    autoping=False,
+                ) as websocket:
+                    self._websocket = websocket
+                    _LOGGER.info("Connected success")
+                    self._last_connection_ts = self.get_ts()
+                    self.stop_timer_connection_lost()
 
-                        if update_state:
-                            self.create_task_log_exception(
-                                self.update_state_device(), False
-                            )
-                        # self.start_timer_ping()
-                        while self._is_running:
+                    if update_state:
+                        self.create_task_log_exception(
+                            self.update_state_device(), False
+                        )
+                    # self.start_timer_ping()
+                    while self._is_running:
+                        try:
+                            msg = await self._websocket.receive(timeout=0.1)
+                            if msg.type in (
+                                WSMsgType.CLOSE,
+                                WSMsgType.CLOSED,
+                                WSMsgType.CLOSING,
+                                WSMsgType.ERROR,
+                            ):
+                                # self._timer_ping.cancel()
+                                _LOGGER.debug("Websocket closed : %s", msg.type)
+                                if (
+                                    self.get_ts() - self._last_connection_ts
+                                ) > TIMEOUT_RECONNECT:
+                                    self._reconnect_now = True
+                                break
+
                             try:
-                                msg = await self._websocket.receive(timeout=0.1)
-                                if msg.type in (
-                                    WSMsgType.CLOSE,
-                                    WSMsgType.CLOSED,
-                                    WSMsgType.CLOSING,
-                                    WSMsgType.ERROR,
-                                ):
-                                    # self._timer_ping.cancel()
-                                    _LOGGER.debug("Websocket closed : %s", msg.type)
-                                    if (
-                                        self.get_ts() - self._last_connection_ts
-                                    ) > TIMEOUT_RECONNECT:
-                                        self._reconnect_now = True
-                                    break
+                                js_data = json.loads(msg.data)
+                                if _LOGGER.isEnabledFor(logging.DEBUG):
+                                    debug_data = copy.copy(js_data)
+                                    debug_data["accessToken"] = "*****"
+                                    debug_data["refreshToken"] = "*****"
+                                    _LOGGER.debug(
+                                        "Receive Json : %s", json.dumps(debug_data)
+                                    )
+                            except ValueError:
+                                pass
 
+                            with contextlib.suppress(Exception):
+                                if js_data["message_type"] == "StateUpdate":
+                                    for listener in self.__event_listener:
+                                        listener.data_receive(js_data)
+
+                        except asyncio.exceptions.TimeoutError:
+                            pass
+                        except asyncio.exceptions.CancelledError:
+                            pass
+
+                        msg: object = None
+
+                        if len(self._msg_to_send) > 0:
+                            with self._msg_lock:
                                 try:
-                                    js_data = json.loads(msg.data)
-                                    if _LOGGER.isEnabledFor(logging.DEBUG):
-                                        debug_data = copy.copy(js_data)
-                                        debug_data["accessToken"] = "*****"
-                                        debug_data["refreshToken"] = "*****"
-                                        _LOGGER.debug(
-                                            "Receive Json : %s", json.dumps(debug_data)
-                                        )
-                                except ValueError:
-                                    pass
+                                    while len(self._msg_to_send) > 0:
+                                        msg = self._msg_to_send.pop(0)
+                                        if _LOGGER.isEnabledFor(logging.DEBUG):
+                                            debug_data = copy.copy(msg)
+                                            debug_data["token"] = "*****"
+                                            _LOGGER.debug(
+                                                "Send Json : %s",
+                                                json.dumps(debug_data),
+                                            )
 
-                                with contextlib.suppress(Exception):
-                                    if js_data["message_type"] == "StateUpdate":
-                                        for listener in self.__event_listener:
-                                            listener.data_receive(js_data)
+                                        await self._websocket.send_json(msg)
 
-                            except asyncio.exceptions.TimeoutError:
-                                pass
-                            except asyncio.exceptions.CancelledError:
-                                pass
+                                        msg = None
+                                except Exception:
+                                    _LOGGER.error("Failed to send Json")
+                                    if msg is not None:
+                                        self._msg_to_send.insert(0, msg)
 
-                            msg: object = None
+        except Exception:
+            _LOGGER.error(sys.exc_info()[1])
 
-                            if len(self._msg_to_send) > 0:
-                                with self._msg_lock:
-                                    try:
-                                        while len(self._msg_to_send) > 0:
-                                            msg = self._msg_to_send.pop(0)
-                                            if _LOGGER.isEnabledFor(logging.DEBUG):
-                                                debug_data = copy.copy(msg)
-                                                debug_data["token"] = "*****"
-                                                _LOGGER.debug(
-                                                    "Send Json : %s",
-                                                    json.dumps(debug_data),
-                                                )
+        if hasattr(self, "_websocket") and not self._websocket.closed:
+            # self._timer_ping.cancel()
+            await self._websocket.close()
 
-                                            await self._websocket.send_json(msg)
-
-                                            msg = None
-                                    except Exception:
-                                        _LOGGER.error("Failed to send Json")
-                                        if msg is not None:
-                                            self._msg_to_send.insert(0, msg)
-
-            except Exception:
-                _LOGGER.error(sys.exc_info()[1])
-
-            if hasattr(self, "_websocket") and not self._websocket.closed:
-                # self._timer_ping.cancel()
-                await self._websocket.close()
-
-            if not self._stop_running:
-                # for listener in self.__event_listener:
-                #    listener.lost_connection()
-                self.start_timer_connection_lost()
-                if not self._reconnect_now:
-                    _LOGGER.debug(
-                        "Try reconnection in " + str(TIMEOUT_RECONNECT) + " secondes"
-                    )
-                    await asyncio.sleep(TIMEOUT_RECONNECT)
-                else:
-                    _LOGGER.debug("Reconnection")
-                self.create_websocket_log_exception(True)
-        finally:
-            pass
-            # loop.close()
+        if not self._stop_running:
+            # for listener in self.__event_listener:
+            #    listener.lost_connection()
+            self.start_timer_connection_lost()
+            if not self._reconnect_now:
+                _LOGGER.debug(
+                    "Try reconnection in " + str(TIMEOUT_RECONNECT) + " secondes"
+                )
+                await asyncio.sleep(TIMEOUT_RECONNECT)
+            else:
+                _LOGGER.debug("Reconnection")
+            self.create_websocket_log_exception(True)
 
     def send_action(self, msg) -> None:
         """None."""
@@ -493,10 +487,7 @@ class CieloHome:
 
     def create_websocket_log_exception(self, update_state: bool = True) -> asyncio.Task:
         """None."""
-        # loop = asyncio.new_event_loop()
-        task = asyncio.create_task(
-            self._log_exception(self.async_connect_wss(update_state))
-        )
+        task = asyncio.create_task(_log_exception(self.async_connect_wss(update_state)))
         self.background_tasks_wss.add(task)
         task.add_done_callback(self.call_back_task)
         return task
@@ -505,25 +496,20 @@ class CieloHome:
         """None."""
         self.background_tasks_wss.remove(task)
 
-    async def _log_exception(self, awaitable):
-        try:
-            return await awaitable
-        except Exception as e:
-            _LOGGER.exception(e)
-
     def create_task_log_exception(
         self, awaitable: Awaitable, long_running: bool = True
     ) -> asyncio.Task:
         """None."""
-
-        async def _log_exception(awaitable):
-            try:
-                return await awaitable
-            except Exception as e:
-                _LOGGER.exception(e)
 
         task = asyncio.create_task(_log_exception(awaitable))
         if long_running:
             self.background_tasks_wss.add(task)
             task.add_done_callback(self.call_back_task)
         return task
+
+
+async def _log_exception(awaitable):
+    try:
+        return await awaitable
+    except Exception as e:
+        _LOGGER.exception(e)
