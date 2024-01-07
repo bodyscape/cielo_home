@@ -20,10 +20,10 @@ _LOGGER = logging.getLogger(__name__)
 
 TIMEOUT_RECONNECT = 10
 TIME_REFRESH_TOKEN = 3300
-# TIMER_PING = 840
+TIMER_PING = 590
 
 # TIME_REFRESH_TOKEN = 20
-# TIMER_PING = 10
+# TIMER_PING = 100
 
 
 class CieloHome:
@@ -41,14 +41,14 @@ class CieloHome:
         # self._password: str = ""
         self._headers: dict[str, str] = {}
         self._websocket: ClientWebSocketResponse
+        self._ws_session: ClientSession
         self.__event_listener: list[object] = []
         self._msg_to_send: list[object] = []
         self._msg_lock = Lock()
-        self._timer_refresh: Timer
-        # self._timer_ping: Timer
         self._timer_connection_lost: Timer = None
         self._last_refresh_token_ts: int
         self._last_ts_msg: int = 0
+        self._last_ts_ping: int = 0
         self._last_connection_ts: int = 0
         self._x_api_key: str = ""
         self._reconnect_now = False
@@ -121,24 +121,8 @@ class CieloHome:
             self.create_websocket_log_exception(False)
 
         self._last_refresh_token_ts = self.get_ts()
-        self.start_timer_refreshtoken()
 
         return True
-
-    def start_timer_refreshtoken(self):
-        """None."""
-        self._timer_refresh = Timer(60, self.refresh_token)
-        self._timer_refresh.start()  # Here run is called
-
-    def refresh_token(self):
-        """None."""
-
-        self.start_timer_refreshtoken()
-        if (self.get_ts() - self._last_refresh_token_ts) > TIME_REFRESH_TOKEN:
-            self._reconnect_now = True
-            asyncio.run_coroutine_threadsafe(
-                self.async_refresh_token(), self._hass.loop
-            ).result()
 
     async def async_refresh_token(
         self,
@@ -198,7 +182,7 @@ class CieloHome:
                                     self._entry, data=config_data
                                 )
                             _LOGGER.debug("Call refreshToken success")
-                            await self._websocket.close()
+                            await self._ws_session.close()
                             self._last_refresh_token_ts = self.get_ts()
                         else:
                             _LOGGER.debug("Call test refreshToken success")
@@ -221,6 +205,7 @@ class CieloHome:
         self._stop_running = False
         try:
             async with ClientSession() as ws_session:  # noqa: SIM117
+                self._ws_session = ws_session
                 async with ws_session.ws_connect(
                     wss_uri,
                     headers=headers_wss,
@@ -233,6 +218,9 @@ class CieloHome:
                     autoping=False,
                 ) as websocket:
                     self._websocket = websocket
+                    if self._last_ts_ping == 0:
+                        self._last_ts_ping = self.get_ts()
+
                     _LOGGER.info("Connected success")
                     self._last_connection_ts = self.get_ts()
                     self.stop_timer_connection_lost()
@@ -281,24 +269,38 @@ class CieloHome:
                         except asyncio.exceptions.CancelledError:
                             pass
 
-                        msg: object = None
+                        if (self.get_ts() - self._last_refresh_token_ts) >= (
+                            TIME_REFRESH_TOKEN
+                        ):
+                            self._reconnect_now = True
+                            self._last_refresh_token_ts = self.get_ts()
+                            self.create_task_log_exception(self.async_refresh_token())
+                        elif self.get_ts() - self._last_ts_ping >= TIMER_PING:
+                            self._last_ts_ping = self.get_ts()
+                            self.send_json("ping")
 
+                        msg: object = None
                         if len(self._msg_to_send) > 0:
                             with self._msg_lock:
                                 try:
                                     while len(self._msg_to_send) > 0:
                                         msg = self._msg_to_send.pop(0)
-                                        if _LOGGER.isEnabledFor(logging.DEBUG):
-                                            debug_data = copy.copy(msg)
-                                            debug_data["token"] = "*****"
-                                            _LOGGER.debug(
-                                                "Send Json : %s",
-                                                json.dumps(debug_data),
-                                            )
+                                        if msg == "ping":
+                                            _LOGGER.debug("Send text : ping")
+                                            await self._websocket.send_str(msg)
+                                        else:
+                                            if _LOGGER.isEnabledFor(logging.DEBUG):
+                                                debug_data = copy.copy(msg)
+                                                debug_data["token"] = "*****"
+                                                _LOGGER.debug(
+                                                    "Send Json : %s",
+                                                    json.dumps(debug_data),
+                                                )
 
-                                        await self._websocket.send_json(msg)
+                                            await self._websocket.send_json(msg)
 
                                         msg = None
+                                        await asyncio.sleep(0.1)
                                 except Exception:
                                     _LOGGER.error("Failed to send Json")
                                     if msg is not None:
@@ -306,6 +308,10 @@ class CieloHome:
 
         except Exception:
             _LOGGER.error(sys.exc_info()[1])
+
+        if hasattr(self, "_ws_session") and not self._ws_session.closed:
+            # self._timer_ping.cancel()
+            await self._ws_session.close()
 
         if hasattr(self, "_websocket") and not self._websocket.closed:
             # self._timer_ping.cancel()
@@ -338,11 +344,6 @@ class CieloHome:
 
         self.send_json(msg)
 
-    # def start_timer_ping(self):
-    #    """None."""
-    #   self._timer_ping = Timer(TIMER_PING, self.send_ping)
-    #    self._timer_ping.start()  # Here run is called
-
     def start_timer_connection_lost(self):
         """None."""
         self._timer_connection_lost = Timer(
@@ -360,13 +361,6 @@ class CieloHome:
         """None."""
         for listener in self.__event_listener:
             listener.lost_connection()
-
-    # def send_ping(self):
-    # """None."""
-    # data = {"message": "Ping Connection Reset", "token": self._access_token}
-    # self.start_timer_ping()
-    # _LOGGER.debug("Send Ping Connection Reset")
-    # self.send_json("ping")
 
     def send_json(self, data):
         """None."""
