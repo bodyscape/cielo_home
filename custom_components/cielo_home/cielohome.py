@@ -52,7 +52,7 @@ class CieloHome:
         self._last_connection_ts: int = 0
         self._x_api_key: str = ""
         self._reconnect_now = False
-        self._hass: HomeAssistant = hass
+        self.hass: HomeAssistant = hass
         self._entry: ConfigEntry = entry
         self._appliance_id = None
         self.background_tasks_wss = set()
@@ -178,7 +178,7 @@ class CieloHome:
                                 config_data = self._entry.data.copy()
                                 config_data["access_token"] = self._access_token
                                 config_data["refresh_token"] = self._refresh_token
-                                self._hass.config_entries.async_update_entry(
+                                self.hass.config_entries.async_update_entry(
                                     self._entry, data=config_data
                                 )
                             _LOGGER.debug("Call refreshToken success")

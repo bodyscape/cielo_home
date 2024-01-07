@@ -30,7 +30,7 @@ class CieloHomeEntity(Entity):
     def _update_internal_state(self):
         raise NotImplementedError()
 
-    def state_updated(self) -> None:
+    async def state_updated(self) -> None:
         """None."""
         self._attr_available = self._device.get_status()
         self._update_internal_state()

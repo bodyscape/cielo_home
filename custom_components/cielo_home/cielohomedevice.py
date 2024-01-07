@@ -1,6 +1,8 @@
 """The Cielo Home integration."""
+import asyncio
 import contextlib
 import logging
+import sys
 from threading import Lock, Timer
 import time
 
@@ -872,20 +874,22 @@ class CieloHomeDevice:
 
     def dispatch_state_timer(self):
         """None."""
-        self._timer_lock.acquire()
-        try:
-            with contextlib.suppress(Exception):
-                self._timer_state_update.cancel()
+        with self._timer_lock:
+            try:
+                with contextlib.suppress(Exception):
+                    self._timer_state_update.cancel()
 
-            self._timer_state_update = Timer(1, self.dispatch_state_updated)
-            self._timer_state_update.start()
-        finally:
-            self._timer_lock.release()
+                self._timer_state_update = Timer(1, self.dispatch_state_updated)
+                self._timer_state_update.start()
+            except Exception:
+                _LOGGER.error(sys.exc_info()[1])
 
     def dispatch_state_updated(self):
         """None."""
         for listener in self.__event_listener:
-            listener.state_updated()
+            asyncio.run_coroutine_threadsafe(
+                listener.state_updated(), self._api.hass.loop
+            )
 
     def lost_connection(self):
         """None."""
