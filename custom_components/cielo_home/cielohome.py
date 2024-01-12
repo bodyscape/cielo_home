@@ -20,7 +20,8 @@ _LOGGER = logging.getLogger(__name__)
 
 TIMEOUT_RECONNECT = 10
 TIME_REFRESH_TOKEN = 3300
-TIMER_PING = 590
+TIMER_PING = 540
+TIMER_PONG = 60
 
 # TIME_REFRESH_TOKEN = 20
 # TIMER_PING = 100
@@ -47,8 +48,10 @@ class CieloHome:
         self._msg_lock = Lock()
         self._timer_connection_lost: Timer = None
         self._last_refresh_token_ts: int
+        self._token_expire_in_ts: int
         self._last_ts_msg: int = 0
         self._last_ts_ping: int = 0
+        self._last_ts_pong: int = 0
         self._last_connection_ts: int = 0
         self._x_api_key: str = ""
         self._reconnect_now = False
@@ -117,10 +120,11 @@ class CieloHome:
         self._session_id = session_id
         self._user_id = user_id
 
+        self._last_refresh_token_ts = self.get_ts()
+        self._token_expire_in_ts = self.get_ts() + TIME_REFRESH_TOKEN
+
         if self._access_token != "":
             self.create_websocket_log_exception(False)
-
-        self._last_refresh_token_ts = self.get_ts()
 
         return True
 
@@ -135,7 +139,10 @@ class CieloHome:
         """Set up Cielo Home refresh."""
         _LOGGER.debug("Call refreshToken")
 
-        await self.set_x_api_key()
+        try:
+            await self.set_x_api_key()
+        except Exception:
+            _LOGGER.error(sys.exc_info()[1])
 
         # Opening JSON file
         # fullpath: str = str(pathlib.Path(__file__).parent.resolve()) + "/login.json"
@@ -144,14 +151,42 @@ class CieloHome:
         # # returns JSON object as
         # # a dictionary
         # data = json.load(file)
-
         # # Iterating through the json
         # # list
         # access_token = data["data"]["user"]["accessToken"]
         # refresh_token = data["data"]["user"]["refreshToken"]
         # self._session_id = data["data"]["user"]["sessionId"]
         # file.close()
+        try:
+            if access_token != "":
+                self._access_token = access_token
+                self._refresh_token = refresh_token
+                self._session_id = session_id
+                self._user_id = user_id
 
+<<<<<<< HEAD
+            self._headers["authorization"] = self._access_token
+            async with ClientSession() as session:  # noqa: SIM117
+                async with session.get(
+                    "https://"
+                    + URL_API
+                    + "/web/token/refresh?refreshToken="
+                    + self._refresh_token,
+                    headers=self._headers,
+                ) as response:
+                    if response.status == 200:
+                        repjson = await response.json()
+                        if repjson["status"] == 200 and repjson["message"] == "SUCCESS":
+                            self._access_token = repjson["data"]["accessToken"]
+                            self._refresh_token = repjson["data"]["refreshToken"]
+                            expire: int = int(repjson["data"]["expiresIn"]) - 300
+                            if (
+                                expire < self._token_expire_in_ts
+                                or expire < self.get_ts()
+                            ):
+                                self._token_expire_in_ts = (
+                                    self.get_ts() + TIME_REFRESH_TOKEN
+=======
         if access_token != "":
             self._access_token = access_token
             self._refresh_token = refresh_token
@@ -180,13 +215,28 @@ class CieloHome:
                                 config_data["refresh_token"] = self._refresh_token
                                 self.hass.config_entries.async_update_entry(
                                     self._entry, data=config_data
+>>>>>>> 779f8c124e418044ed7989e8fd6a80051ddf7c77
                                 )
-                            _LOGGER.debug("Call refreshToken success")
-                            await self._ws_session.close()
-                            self._last_refresh_token_ts = self.get_ts()
-                        else:
-                            _LOGGER.debug("Call test refreshToken success")
-                        return True
+                            else:
+                                self._token_expire_in_ts = expire
+
+                            if not test:
+                                if self._entry is not None:
+                                    config_data = self._entry.data.copy()
+                                    config_data["access_token"] = self._access_token
+                                    config_data["refresh_token"] = self._refresh_token
+                                    self.hass.config_entries.async_update_entry(
+                                        self._entry, data=config_data
+                                    )
+                                _LOGGER.debug("Call refreshToken success")
+                                await self._ws_session.close()
+                                self._last_refresh_token_ts = self.get_ts()
+                            else:
+                                _LOGGER.debug("Call test refreshToken success")
+                            return True
+        except Exception:
+            _LOGGER.error(sys.exc_info()[1])
+
         return False
 
     async def async_connect_wss(self, update_state: bool = False):
@@ -220,6 +270,7 @@ class CieloHome:
                     self._websocket = websocket
                     if self._last_ts_ping == 0:
                         self._last_ts_ping = self.get_ts()
+                        self._last_ts_pong = self._last_ts_ping + TIMER_PONG
 
                     _LOGGER.info("Connected success")
                     self._last_connection_ts = self.get_ts()
@@ -231,6 +282,8 @@ class CieloHome:
                         )
                     # self.start_timer_ping()
                     while self._is_running:
+                        now: int = self.get_ts()
+
                         try:
                             msg = await self._websocket.receive(timeout=0.1)
                             if msg.type in (
@@ -241,9 +294,7 @@ class CieloHome:
                             ):
                                 # self._timer_ping.cancel()
                                 _LOGGER.debug("Websocket closed : %s", msg.type)
-                                if (
-                                    self.get_ts() - self._last_connection_ts
-                                ) > TIMEOUT_RECONNECT:
+                                if (now - self._last_connection_ts) > TIMEOUT_RECONNECT:
                                     self._reconnect_now = True
                                 break
 
@@ -251,33 +302,44 @@ class CieloHome:
                                 js_data = json.loads(msg.data)
                                 if _LOGGER.isEnabledFor(logging.DEBUG):
                                     debug_data = copy.copy(js_data)
-                                    debug_data["accessToken"] = "*****"
-                                    debug_data["refreshToken"] = "*****"
+                                    if hasattr(debug_data, "accessToken"):
+                                        debug_data["accessToken"] = "*****"
+                                    if hasattr(debug_data, "refreshToken"):
+                                        debug_data["refreshToken"] = "*****"
                                     _LOGGER.debug(
                                         "Receive Json : %s", json.dumps(debug_data)
                                     )
+
+                                with contextlib.suppress(Exception):
+                                    if js_data["message"] == "Internal server error":
+                                        self._last_ts_pong = self.get_ts() + 1
+
+                                with contextlib.suppress(Exception):
+                                    if js_data["message_type"] == "StateUpdate":
+                                        for listener in self.__event_listener:
+                                            listener.data_receive(js_data)
+
                             except ValueError:
                                 pass
-
-                            with contextlib.suppress(Exception):
-                                if js_data["message_type"] == "StateUpdate":
-                                    for listener in self.__event_listener:
-                                        listener.data_receive(js_data)
 
                         except asyncio.exceptions.TimeoutError:
                             pass
                         except asyncio.exceptions.CancelledError:
                             pass
 
-                        if (self.get_ts() - self._last_refresh_token_ts) >= (
-                            TIME_REFRESH_TOKEN
-                        ):
+                        if now > (self._token_expire_in_ts):
                             self._reconnect_now = True
-                            self._last_refresh_token_ts = self.get_ts()
+                            self._token_expire_in_ts = now + 60
                             self.create_task_log_exception(self.async_refresh_token())
-                        elif self.get_ts() - self._last_ts_ping >= TIMER_PING:
-                            self._last_ts_ping = self.get_ts()
+                        elif now - self._last_ts_ping >= TIMER_PING:
+                            self._last_ts_ping = now
+                            self._last_ts_pong = now
                             self.send_json("ping")
+                        elif (
+                            now > (self._last_ts_pong + TIMER_PONG)
+                        ) and self._last_ts_pong == self._last_ts_ping:
+                            self._reconnect_now = True
+                            self._is_running = False
 
                         msg: object = None
                         if len(self._msg_to_send) > 0:
@@ -328,6 +390,7 @@ class CieloHome:
                 await asyncio.sleep(TIMEOUT_RECONNECT)
             else:
                 _LOGGER.debug("Reconnection")
+            self._last_ts_ping = 0
             self.create_websocket_log_exception(True)
 
     def send_action(self, msg) -> None:
@@ -372,7 +435,8 @@ class CieloHome:
 
     def get_ts(self) -> int:
         """None."""
-        return int((datetime.utcnow() - datetime.fromtimestamp(0)).total_seconds())  # noqa: DTZ003
+        return int(datetime.now().timestamp())
+        # return int((datetime.utcnow() - datetime.fromtimestamp(0)).total_seconds())  # noqa: DTZ003
 
     async def async_get_devices(self):
         """None."""
