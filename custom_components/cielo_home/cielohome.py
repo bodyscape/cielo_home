@@ -164,7 +164,6 @@ class CieloHome:
                 self._session_id = session_id
                 self._user_id = user_id
 
-<<<<<<< HEAD
             self._headers["authorization"] = self._access_token
             async with ClientSession() as session:  # noqa: SIM117
                 async with session.get(
@@ -186,36 +185,6 @@ class CieloHome:
                             ):
                                 self._token_expire_in_ts = (
                                     self.get_ts() + TIME_REFRESH_TOKEN
-=======
-        if access_token != "":
-            self._access_token = access_token
-            self._refresh_token = refresh_token
-            self._session_id = session_id
-            self._user_id = user_id
-
-        self._headers["authorization"] = self._access_token
-        async with ClientSession() as session:  # noqa: SIM117
-            async with session.get(
-                "https://"
-                + URL_API
-                + "/web/token/refresh?refreshToken="
-                + self._refresh_token,
-                headers=self._headers,
-            ) as response:
-                if response.status == 200:
-                    repjson = await response.json()
-                    if repjson["status"] == 200 and repjson["message"] == "SUCCESS":
-                        # print("repJson:", repjson)
-                        self._access_token = repjson["data"]["accessToken"]
-                        self._refresh_token = repjson["data"]["refreshToken"]
-                        if not test:
-                            if self._entry is not None:
-                                config_data = self._entry.data.copy()
-                                config_data["access_token"] = self._access_token
-                                config_data["refresh_token"] = self._refresh_token
-                                self.hass.config_entries.async_update_entry(
-                                    self._entry, data=config_data
->>>>>>> 779f8c124e418044ed7989e8fd6a80051ddf7c77
                                 )
                             else:
                                 self._token_expire_in_ts = expire
