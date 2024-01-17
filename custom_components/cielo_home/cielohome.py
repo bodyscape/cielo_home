@@ -98,10 +98,10 @@ class CieloHome:
                     login_url + main_js_url + "?t=" + str(self.get_ts())
                 ) as resp:
                     html_text = await resp.text()
-                    index = html_text.find(",'onChange',") + 12
-                    index = html_text.find(",", index) + 1
+                    index = html_text.find("','facebookAppId':")
+                    index2 = html_text.rfind("'", 0, index - 1) + 1
                     self._x_api_key = html_text[
-                        index : html_text.find(",", index)
+                        index2 : html_text.find(",", index)
                     ].replace("'", "")
                     self._headers["x-api-key"] = self._x_api_key
 
@@ -158,6 +158,10 @@ class CieloHome:
         # self._session_id = data["data"]["user"]["sessionId"]
         # file.close()
         try:
+            if test:
+                self._last_refresh_token_ts = self.get_ts()
+                self._token_expire_in_ts = self.get_ts() + TIME_REFRESH_TOKEN
+
             if access_token != "":
                 self._access_token = access_token
                 self._refresh_token = refresh_token
