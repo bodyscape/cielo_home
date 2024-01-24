@@ -414,11 +414,16 @@ class CieloHome:
     async def async_get_devices(self):
         """None."""
         devices = await self.async_get_thermostats()
+        devicesNotSupported = []
 
         appliance_ids = ""
         if devices is not None:
             for device in devices:
                 appliance_id: str = str(device["applianceId"])
+                if appliance_id in ("0", ""):
+                    devicesNotSupported.append(device)
+                    continue
+
                 if appliance_id in appliance_ids:
                     continue
 
@@ -429,6 +434,17 @@ class CieloHome:
 
             appliances = await self.async_get_thermostat_info(appliance_ids)
             appliance_ids = ""
+
+            if len(devicesNotSupported) > 0:
+                for device in devicesNotSupported:
+                    _LOGGER.warning(
+                        "Device '"
+                        + str(device["deviceName"])
+                        + "' not supported, invalid appliance '"
+                        + str(device["applianceId"])
+                        + "'"
+                    )
+                    devices.remove(device)
 
             for device in devices:
                 for appliance in appliances:
