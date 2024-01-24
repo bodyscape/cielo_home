@@ -40,20 +40,20 @@ class CieloHomeTargetTempNumber(CieloHomeEntity, NumberEntity):
         self._attr_icon = "mdi:home-thermometer"
         self._attr_device_class = NumberDeviceClass.TEMPERATURE
 
-        if self._device.get_max_temp() > 0:
-            self._attr_native_max_value = self._device.get_max_temp()
-        if self._device.get_min_temp() > 0:
-            self._attr_native_min_value = self._device.get_min_temp()
-
         self._attr_mode: NumberMode = NumberMode.AUTO
-        self._attr_native_value = self._device.get_target_temperature()
         self._attr_native_unit_of_measurement = self._device.get_unit_of_temperature()
         self._attr_native_step = self._device.get_temp_increment()
         self._device.add_listener(self)
+        self._update_internal_state()
 
     def _update_internal_state(self):
         """None."""
         self._attr_native_value = self._device.get_target_temperature()
+
+        if self._device.get_supportTargetTemp() and self._device.get_max_temp() > 0:
+            self._attr_native_max_value = self._device.get_max_temp()
+        if self._device.get_supportTargetTemp() and self._device.get_min_temp() > 0:
+            self._attr_native_min_value = self._device.get_min_temp()
 
     def set_native_value(self, value: float) -> None:
         """Set new value."""

@@ -99,11 +99,6 @@ class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
         if self._device.get_is_available_swing_modes():
             self._attr_supported_features |= ClimateEntityFeature.SWING_MODE
 
-        if self._device.get_supportTargetTemp() and self._device.get_max_temp() > 0:
-            self._attr_max_temp = self._device.get_max_temp()
-        if self._device.get_supportTargetTemp() and self._device.get_min_temp() > 0:
-            self._attr_min_temp = self._device.get_min_temp()
-
         self._attr_preset_modes = self._device.get_preset_modes()
         if self._attr_preset_modes is not None:
             self._attr_supported_features |= ClimateEntityFeature.PRESET_MODE
@@ -169,3 +164,8 @@ class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
         if self._attr_preset_modes is not None:
             self._attr_preset_mode = self._device.get_preset_mode()
         self._attr_hvac_mode = self._device.get_hvac_mode()
+
+        if self._device.get_supportTargetTemp() and self._device.get_max_temp() > 0:
+            self._attr_max_temp = self._device.get_max_temp()
+        if self._device.get_supportTargetTemp() and self._device.get_min_temp() > 0:
+            self._attr_min_temp = self._device.get_min_temp()

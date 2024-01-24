@@ -437,7 +437,27 @@ class CieloHomeDevice:
 
     def get_range_temp(self) -> str:
         """None."""
+        if self.get_is_multi_mode_Temp_Range():
+            modes = self.get_modes_temp()
+            if modes is not None:
+                for mode in modes:
+                    if mode["mode"] == self.get_mode():
+                        return mode["temp"]
+
         return self._device["appliance"]["temp"]
+
+    def get_is_multi_mode_Temp_Range(self) -> bool:
+        """None."""
+        with contextlib.suppress(KeyError):
+            return self._device["appliance"]["isMultiModeTempRange"] == 1
+
+        return False
+
+    def get_modes_temp(self) -> any:
+        """None."""
+        with contextlib.suppress(KeyError):
+            return self._device["appliance"]["modesTemp"]
+        return None
 
     def get_uniqueid(self):
         """None."""
