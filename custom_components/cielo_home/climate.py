@@ -5,6 +5,7 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant.components.climate import (
+    ATTR_HVAC_MODE,
     HVAC_MODES,
     ClimateEntity,
     ClimateEntityFeature,
@@ -118,15 +119,20 @@ class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
 
     def set_temperature(self, **kwargs: Any) -> None:
         """Set a new target temperature."""
-        temp: int = int(
-            self._device.get_adjust_temp(
-                self._device.get_unit_of_temperature_appliance(),
-                self._attr_temperature_unit,
-                int(kwargs.get(ATTR_TEMPERATURE)),
-            )
-        )
 
-        self._device.send_temperature(temp)
+        if ATTR_HVAC_MODE in kwargs:
+            self.set_hvac_mode(HVACMode(kwargs[ATTR_HVAC_MODE]))
+
+        if ATTR_TEMPERATURE in kwargs:
+            temp: int = int(
+                self._device.get_adjust_temp(
+                    self._device.get_unit_of_temperature_appliance(),
+                    self._attr_temperature_unit,
+                    int(kwargs.get(ATTR_TEMPERATURE)),
+                )
+            )
+            self._device.send_temperature(temp)
+
         self._update_internal_state()
 
     async def async_sync_ac_state(
