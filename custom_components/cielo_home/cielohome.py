@@ -6,6 +6,7 @@ import copy
 from datetime import datetime
 import json
 import logging
+import re
 import sys
 from threading import Lock, Timer
 
@@ -53,7 +54,8 @@ class CieloHome:
         self._last_ts_ping: int = 0
         self._last_ts_pong: int = 0
         self._last_connection_ts: int = 0
-        self._x_api_key: str = ""
+        self._x_api_keys: list = None
+        self._last_x_api_key: str = None
         self._reconnect_now = False
         self.hass: HomeAssistant = hass
         self._entry: ConfigEntry = entry
@@ -98,22 +100,21 @@ class CieloHome:
                     login_url + main_js_url + "?t=" + str(self.get_ts())
                 ) as resp:
                     html_text = await resp.text()
-                    index = html_text.find("','facebookAppId':")
-                    index2 = html_text.rfind("'", 0, index - 1) + 1
-                    self._x_api_key = html_text[
-                        index2 : html_text.find(",", index)
-                    ].replace("'", "")
-                    self._headers["x-api-key"] = self._x_api_key
+                    x = re.compile(
+                        r"['][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9][A-Za-z0-9]{36}[']"
+                    )
+                    keys: list = x.findall(html_text)
+                    if len(keys) > 0:
+                        for x in range(len(keys)):
+                            keys[x] = keys[x].replace("'", "")
+                        self._x_api_keys = keys
 
-        return self._x_api_key != ""
+        return self._x_api_keys is not None
 
     async def async_auth(
         self, access_token: str, refresh_token: str, session_id: str, user_id: str
     ) -> bool:
         """Set up Cielo Home auth."""
-
-        if not await self.set_x_api_key():
-            return False
 
         self._access_token = access_token
         self._refresh_token = refresh_token
@@ -123,10 +124,55 @@ class CieloHome:
         self._last_refresh_token_ts = self.get_ts()
         self._token_expire_in_ts = self.get_ts() + TIME_REFRESH_TOKEN
 
+        with contextlib.suppress(KeyError):
+            self._last_x_api_key = self._entry.data["x_api_key"]
+        await self.try_async_refresh_token(test=True)
+
         if self._access_token != "":
             self.create_websocket_log_exception(False)
 
         return True
+
+    async def try_async_refresh_token(
+        self,
+        access_token: str = "",
+        refresh_token: str = "",
+        session_id: str = "",
+        user_id: str = "",
+        test: bool = False,
+    ) -> bool:
+        if self._last_x_api_key is not None:
+            self._headers["x-api-key"] = self._last_x_api_key
+            res = await self.async_refresh_token(
+                access_token, refresh_token, session_id, user_id, test
+            )
+            if res:
+                return True
+
+        try:
+            await self.set_x_api_key()
+        except Exception:
+            _LOGGER.error(sys.exc_info()[1])
+
+        for key in self._x_api_keys:
+            if self._last_x_api_key is not None:
+                if self._last_x_api_key == key:
+                    continue
+
+            self._headers["x-api-key"] = key
+            res = await self.async_refresh_token(
+                access_token, refresh_token, session_id, user_id, test
+            )
+            if res:
+                config_data = self._entry.data.copy()
+                config_data["x_api_key"] = key
+                self._last_x_api_key = key
+                self.hass.config_entries.async_update_entry(
+                    self._entry, data=config_data
+                )
+                return True
+
+        return False
 
     async def async_refresh_token(
         self,
@@ -303,7 +349,9 @@ class CieloHome:
                         if now > (self._token_expire_in_ts):
                             self._reconnect_now = True
                             self._token_expire_in_ts = now + 60
-                            self.create_task_log_exception(self.async_refresh_token())
+                            self.create_task_log_exception(
+                                self.try_async_refresh_token()
+                            )
                         elif now - self._last_ts_ping >= TIMER_PING:
                             self._last_ts_ping = now
                             self._last_ts_pong = now
@@ -481,6 +529,7 @@ class CieloHome:
         # file.close()
 
         self._headers["authorization"] = self._access_token
+        self._headers["x-api-key"] = self._last_x_api_key
         devices = None
         async with ClientSession() as session:  # noqa: SIM117
             async with session.get(
@@ -512,6 +561,7 @@ class CieloHome:
         """Get de the list Devices/Thermostats."""
         # https://api.smartcielo.com/web/sync/appliances/1?applianceIdList=[785]&
         self._headers["authorization"] = self._access_token
+        self._headers["x-api-key"] = self._last_x_api_key
         async with ClientSession() as session:  # noqa: SIM117
             async with session.get(
                 "https://"
