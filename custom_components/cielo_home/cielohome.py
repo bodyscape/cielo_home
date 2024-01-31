@@ -125,7 +125,8 @@ class CieloHome:
         self._token_expire_in_ts = self.get_ts() + TIME_REFRESH_TOKEN
 
         with contextlib.suppress(KeyError):
-            self._last_x_api_key = self._entry.data["x_api_key"]
+            if self._entry is not None:
+                self._last_x_api_key = self._entry.data["x_api_key"]
         await self.try_async_refresh_token(test=True)
 
         if self._access_token != "":
@@ -141,6 +142,7 @@ class CieloHome:
         user_id: str = "",
         test: bool = False,
     ) -> bool:
+        """Set up Cielo Home auth."""
         if self._last_x_api_key is not None:
             self._headers["x-api-key"] = self._last_x_api_key
             res = await self.async_refresh_token(
@@ -164,12 +166,13 @@ class CieloHome:
                 access_token, refresh_token, session_id, user_id, test
             )
             if res:
-                config_data = self._entry.data.copy()
-                config_data["x_api_key"] = key
                 self._last_x_api_key = key
-                self.hass.config_entries.async_update_entry(
-                    self._entry, data=config_data
-                )
+                if self._entry is not None:
+                    config_data = self._entry.data.copy()
+                    config_data["x_api_key"] = key
+                    self.hass.config_entries.async_update_entry(
+                        self._entry, data=config_data
+                    )
                 return True
 
         return False
