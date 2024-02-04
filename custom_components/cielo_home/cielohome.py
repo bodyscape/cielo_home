@@ -530,6 +530,8 @@ class CieloHome:
         # devices = data["data"]["listDevices"]
 
         # file.close()
+        if self._last_x_api_key is None:
+            await self.try_async_refresh_token()
 
         self._headers["authorization"] = self._access_token
         self._headers["x-api-key"] = self._last_x_api_key
