@@ -8,5 +8,5 @@
   "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/bodyscape/cielo_home/issues",
   "requirements": [],
-  "version": "1.7.5"
+  "version": "1.7.6"
 }

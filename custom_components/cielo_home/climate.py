@@ -1,4 +1,5 @@
 """Support for Cielo Home thermostats."""
+
 import logging
 from typing import Any
 
@@ -84,6 +85,12 @@ class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
         """Initialize the thermostat."""
         super().__init__(device, device.get_name(), device.get_uniqueid())
         self._attr_target_temperature_step = int(self._device.get_temp_increment())
+        self._attr_supported_features = (
+            self._attr_supported_features
+            | ClimateEntityFeature.TURN_OFF
+            | ClimateEntityFeature.TURN_ON
+        )
+
         if self._device.get_supportTargetTemp():
             self._attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
         self._attr_temperature_unit = self._device.get_unit_of_temperature()
@@ -110,6 +117,16 @@ class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
     def set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set the system mode."""
         self._device.send_hvac_mode(hvac_mode)
+        self._update_internal_state()
+
+    def turn_off(self) -> None:
+        """Set the system mode."""
+        self._device.send_hvac_mode(HVACMode.OFF)
+        self._update_internal_state()
+
+    def turn_on(self) -> None:
+        """Set the system mode."""
+        self._device.send_power_on()
         self._update_internal_state()
 
     def set_preset_mode(self, preset_mode: str) -> None:
