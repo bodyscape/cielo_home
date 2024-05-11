@@ -2,7 +2,7 @@
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 [![cielo_home](https://img.shields.io/github/release/bodyscape/cielo_home/all.svg?style=for-the-badge)](https://github.com/bodyscape/cielo_home/releases)
-![Maintenance](https://img.shields.io/maintenance/yes/2023.svg?style=for-the-badge)
+![Maintenance](https://img.shields.io/maintenance/yes/2024.svg?style=for-the-badge)
 [![](https://img.shields.io/badge/MAINTAINER-bodyscape-red?style=for-the-badge)](https://github.com/bodyscape)
 
 <a href="https://www.buymeacoffee.com/bodyscape"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=bodyscape&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff"></a>
