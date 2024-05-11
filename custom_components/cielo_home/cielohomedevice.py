@@ -171,10 +171,10 @@ class CieloHomeDevice:
             if self._force_connection_source
             else self.get_connection_source(),
             "user_id": self._user_id,
-            "token": "",
+            # "token": "",
             "mid": "",
             "preset": 0,
-            "application_version": "1.0.0",
+            "application_version": "1.2.0",
             "ts": 0,
             "actions": action,
             "oldPower": self._old_power,
@@ -569,6 +569,7 @@ class CieloHomeDevice:
             "fanspeed": self._device["latestAction"]["fanspeed"],
             "temp": self._device["latestAction"]["temp"],
             "swing": self._device["latestAction"]["swing"],
+            "swinginternal": "",
         }
 
         with contextlib.suppress(KeyError):

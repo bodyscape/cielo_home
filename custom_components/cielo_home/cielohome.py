@@ -163,7 +163,7 @@ class CieloHome:
 
             self._headers["x-api-key"] = key
             res = await self.async_refresh_token(
-                access_token, refresh_token, session_id, user_id, test
+                access_token, refresh_token, session_id, user_id, test, False
             )
             if res:
                 self._last_x_api_key = key
@@ -184,14 +184,16 @@ class CieloHome:
         session_id: str = "",
         user_id: str = "",
         test: bool = False,
+        refreshKey: bool = True,
     ) -> bool:
         """Set up Cielo Home refresh."""
-        _LOGGER.debug("Call refreshToken")
+        _LOGGER.debug("Call refreshToken %s", self._headers["x-api-key"])
 
-        try:
-            await self.set_x_api_key()
-        except Exception:
-            _LOGGER.error(sys.exc_info()[1])
+        if refreshKey:
+            try:
+                await self.set_x_api_key()
+            except Exception:
+                _LOGGER.error(sys.exc_info()[1])
 
         # Opening JSON file
         # fullpath: str = str(pathlib.Path(__file__).parent.resolve()) + "/login.json"
@@ -377,7 +379,7 @@ class CieloHome:
                                         else:
                                             if _LOGGER.isEnabledFor(logging.DEBUG):
                                                 debug_data = copy.copy(msg)
-                                                debug_data["token"] = "*****"
+                                                # debug_data["token"] = "*****"
                                                 _LOGGER.debug(
                                                     "Send Json : %s",
                                                     json.dumps(debug_data),
@@ -419,7 +421,7 @@ class CieloHome:
 
     def send_action(self, msg) -> None:
         """None."""
-        msg["token"] = self._access_token
+        # msg["token"] = self._access_token
         msg["mid"] = self._session_id
         msg["ts"] = self.get_ts()
 
