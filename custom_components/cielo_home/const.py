@@ -1,4 +1,5 @@
 """Constants for the Cielo Home integration."""
+
 from homeassistant.components.climate import PRESET_NONE
 
 DOMAIN = "cielo_home"
@@ -28,7 +29,6 @@ SWING_POSITION4_VALUE = "pos4"
 SWING_POSITION5_VALUE = "pos5"
 SWING_POSITION6_VALUE = "pos6"
 
-PRESET_NONE = "none"
 PRESET_TURBO = "Turbo"
 PRESET_MODES = [PRESET_NONE, PRESET_TURBO]
 

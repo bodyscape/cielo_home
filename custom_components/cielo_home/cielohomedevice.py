@@ -1,4 +1,5 @@
 """The Cielo Home integration."""
+
 import asyncio
 import contextlib
 import logging
@@ -98,26 +99,55 @@ class CieloHomeDevice:
         self._device["latestAction"]["power"] = value
         self._send_msg(action, "power", action["power"])
 
-    def sync_ac_state(
-        self, power: bool, temp: int, mode: str, fan_speed: str, swing: str
-    ) -> None:
-        """None."""
-        action = {
-            "power": "on" if power else "off",
-            "temp": temp
-            if power and temp > 0
-            else self._device["latestAction"]["temp"],
-            "mode": mode
-            if power and mode != ""
-            else self._device["latestAction"]["mode"],
-            "fanspeed": fan_speed
-            if power and fan_speed != ""
-            else self._device["latestAction"]["fanspeed"],
-            "swing": swing
-            if power and swing != ""
-            else self._device["latestAction"]["swing"],
-        }
-        self._send_msg(action, "", "", default_action="syncState")
+    #    def sync_ac_state_test(
+    #        self, power: bool, temp: int, mode: str, fan_speed: str, swing: str, preset: str
+    #    ) -> None:
+    #        """None."""
+    #        action = self._get_action()
+    #        action["power"] = "on" if power else "off"
+    #
+    #        if power:
+    #            if temp > 0:
+    #                action["temp"] = temp
+    #
+    #            if mode != "":
+    #                action["mode"] = mode
+    #
+    #            if fan_speed != "":
+    #                action["fanspeed"] = fan_speed
+    #
+    #            if swing != "":
+    #                action["swing"] = swing
+    #
+    #            if preset != "":
+    #                action["preset"] = preset
+    #
+    #        self._send_msg(action, "", "", default_action="actionControl")
+
+    #    def sync_ac_state(
+    #        self, power: bool, temp: int, mode: str, fan_speed: str, swing: str, preset: str
+    #    ) -> None:
+    #        """None."""
+    #        action = self._get_action()
+    #        action = {
+    #            "power": "on" if power else "off",
+    #            "temp": temp
+    #            if power and temp > 0
+    #            else self._device["latestAction"]["temp"],
+    #            "mode": mode
+    #            if power and mode != ""
+    #           else self._device["latestAction"]["mode"],
+    #            "fanspeed": fan_speed
+    #            if power and fan_speed != ""
+    #            else self._device["latestAction"]["fanspeed"],
+    #           "swing": swing
+    #           if power and swing != ""
+    #            else self._device["latestAction"]["swing"],
+    #            "preset": preset
+    #            if power and preset != ""
+    #            else self._device["latestAction"]["turbo"],
+    #        }
+    #        self._send_msg(action, "", "", default_action="syncState")
 
     def send_light_on(self) -> None:
         """None."""
@@ -153,7 +183,11 @@ class CieloHomeDevice:
         action = self._get_action()
         action["turbo"] = value
         self._device["latestAction"]["turbo"] = value
-        self._send_msg(action, "turbo", "on/off")
+
+        if self.get_device_type_version() != "BI03":
+            value = "on/off"
+
+        self._send_msg(action, "turbo", value)
 
     def _send_msg(
         self, action, action_type, action_value, default_action="actionControl"

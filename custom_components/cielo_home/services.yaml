@@ -116,3 +116,22 @@ sync_ac_state:
             - "pos4"
             - "pos5"
             - "pos6"
+    preset:
+      # Field name as shown in UI
+      name: Preset mode
+      # Description of the field
+      description: Preset mode setting
+      # Whether or not field is required (default = false)
+      required: false
+      # Advanced fields are only shown when the advanced mode is enabled for the user (default = false)
+      advanced: false
+      # Example value that can be passed for this field
+      example: "none"
+      # The default field value
+      default: "none"
+      # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
+      selector:
+        select:
+          options:
+            - "none"
+            - "Turbo"
