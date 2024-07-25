@@ -6,7 +6,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .cielohomedevice import CieloHomeDevice
-from .const import DOMAIN
+from .const import (
+    DEVICE_BREEZ_MAX,
+    DOMAIN
+)
 from .entity import CieloHomeEntity
 
 
@@ -102,10 +105,13 @@ class CieloHomePresetSelect(CieloHomeEntity, SelectEntity):
     def _update_internal_state(self):
         """None."""
         self._attr_current_option = self._device.get_preset_mode()
-        self._attr_available = self._device.get_status() and (
-            self._device.get_hvac_mode() == HVACMode.HEAT
-            or self._device.get_hvac_mode() == HVACMode.COOL
-        )
+        if self._device.get_device_type() == DEVICE_BREEZ_MAX:
+            self._attr_available = self._device.get_status()
+        else:
+            self._attr_available = self._device.get_status() and (
+                self._device.get_hvac_mode() == HVACMode.HEAT
+                or self._device.get_hvac_mode() == HVACMode.COOL
+            )
 
     def select_option(self, option: str) -> None:
         """Change the selected option."""

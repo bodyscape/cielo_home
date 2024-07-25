@@ -12,6 +12,7 @@ from homeassistant.const import UnitOfTemperature
 
 from .cielohome import CieloHome
 from .const import (
+    DEVICE_BREEZ_MAX,
     FAN_AUTO,
     FAN_AUTO_VALUE,
     FAN_FANSPEED_VALUE,
@@ -189,8 +190,20 @@ class CieloHomeDevice:
 
         self._send_msg(action, "turbo", value)
 
+    def _send_preset_mode(self, value: int) -> None:
+        """None."""
+        if self._device["latestAction"]["mode"] == "auto" and self._device["latestAction"]["preset"] == value:
+            return
+
+        action = self._get_action()
+        action["mode"] = "auto"
+        self._device["latestAction"]["mode"] = "auto"
+        self._device["latestAction"]["preset"] = value
+
+        self._send_msg(action, "mode", "auto", overrides={'preset': value})
+
     def _send_msg(
-        self, action, action_type, action_value, default_action="actionControl"
+        self, action, action_type, action_value, default_action="actionControl", overrides=None
     ) -> None:
         msg = {
             "action": default_action,
@@ -217,6 +230,9 @@ class CieloHomeDevice:
         if default_action == "actionControl":
             msg["actionType"] = action_type
             msg["actionValue"] = action_value
+
+        if overrides:
+            msg = {**msg, **overrides}
 
         self._api.send_action(msg)
         # self._api.send_action(msg)
@@ -803,13 +819,31 @@ class CieloHomeDevice:
 
     def get_preset_mode(self) -> str:
         """None."""
+        if self.get_device_type() == DEVICE_BREEZ_MAX:
+            preset_modes = self.get_breez_preset_modes()
+            for key in preset_modes.keys():
+                if preset_modes[key] == self._device["latestAction"]["preset"]:
+                    return key
+
         if self.get_turbo() == "on":
             return PRESET_TURBO
         else:
             return PRESET_NONE
 
+    def get_breez_preset_modes(self) -> dict[str:int]:
+        """None."""
+        with contextlib.suppress(KeyError):
+            presets = self._device["breezPresets"]
+            if presets:
+                result = {preset['title']: preset['presetId'] for preset in presets}
+                return {**{"": 0}, **result}
+        return []
+
     def get_preset_modes(self) -> list[str]:
         """None."""
+        if self.get_device_type() == DEVICE_BREEZ_MAX:
+            return list(self.get_breez_preset_modes().keys())
+
         if self.get_is_turbo_mode():
             return PRESET_MODES
         else:
@@ -850,10 +884,14 @@ class CieloHomeDevice:
 
     def send_preset_mode(self, preset_mode: str) -> None:
         """None."""
-        if preset_mode == PRESET_TURBO:
-            self.send_turbo_on()
+        if self.get_device_type() == DEVICE_BREEZ_MAX:
+            preset_id = self.get_breez_preset_modes().get(preset_mode)
+            self._send_preset_mode(preset_id)
         else:
-            self.send_turbo_off()
+            if preset_mode == PRESET_TURBO:
+                self.send_turbo_on()
+            else:
+                self.send_turbo_off()
 
     def send_swing_mode(self, swing_mode: str) -> None:
         """None."""
@@ -917,6 +955,9 @@ class CieloHomeDevice:
 
             with contextlib.suppress(KeyError):
                 self._device["latestAction"]["followme"] = data["action"]["followme"]
+
+            with contextlib.suppress(KeyError):
+                self._device["latestAction"]["preset"] = data["action"]["preset"]
 
             self.dispatch_state_timer()
             # self.dispatch_state_updated()
