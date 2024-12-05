@@ -184,7 +184,7 @@ class CieloHomeDevice:
         action["turbo"] = value
         self._device["latestAction"]["turbo"] = value
 
-        if self.get_device_type_version() != "BI03":
+        if self.get_device_type_version() != "BI03" or self.get_device_type_version() != "BI04":
             value = "on/off"
 
         self._send_msg(action, "turbo", value)
