@@ -90,6 +90,7 @@ class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
         """Initialize the thermostat."""
         super().__init__(device, device.get_name(), device.get_uniqueid())
         self._attr_target_temperature_step = int(self._device.get_temp_increment())
+        self._enable_turn_on_off_backwards_compatibility = False
 
         self._attr_supported_features |= ClimateEntityFeature.TURN_OFF
         self._attr_supported_features |= ClimateEntityFeature.TURN_ON
