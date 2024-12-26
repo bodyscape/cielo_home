@@ -69,19 +69,18 @@ async def async_setup_entry(
         SWING_POSITION6_VALUE,
     ]
 
-
-#    platform.async_register_entity_service(
-#        "sync_ac_state",
-#        {
-#            vol.Required("power", default=False): cv.boolean,
-#            vol.Optional("temp"): vol.Coerce(int),
-#            vol.Optional("mode"): vol.All(vol.In(HVAC_MODES)),
-#            vol.Optional("fan_speed"): vol.All(vol.In(list_fan_speed)),
-#            vol.Optional("swing"): vol.All(vol.In(list_swing)),
-#            vol.Optional("preset"): vol.All(vol.In(list_preset_mode)),
-#        },
-#        "async_sync_ac_state",
-#    )
+    platform.async_register_entity_service(
+        "sync_ac_state",
+        {
+            vol.Required("power", default=False): cv.boolean,
+            vol.Optional("temp"): vol.Coerce(int),
+            vol.Optional("mode"): vol.All(vol.In(HVAC_MODES)),
+            vol.Optional("fan_speed"): vol.All(vol.In(list_fan_speed)),
+            vol.Optional("swing"): vol.All(vol.In(list_swing)),
+            vol.Optional("preset"): vol.All(vol.In(list_preset_mode)),
+        },
+        "async_sync_ac_state",
+    )
 
 
 class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
@@ -156,17 +155,17 @@ class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
 
         self._update_internal_state()
 
-    #    async def async_sync_ac_state(
-    #        self,
-    #        power: bool,
-    #        temp: int = 0,
-    #        mode: str = "",
-    #        fan_speed: str = "",
-    #        swing: str = "",
-    #        preset: str = "",
-    #    ) -> None:
-    #        """Sync_ac_state."""
-    #        self._device.sync_ac_state(power, temp, mode, fan_speed, swing, preset)
+    async def async_sync_ac_state(
+        self,
+        power: bool,
+        temp: int = 0,
+        mode: str = "",
+        fan_speed: str = "",
+        swing: str = "",
+        preset: str = "",
+    ) -> None:
+        """Sync_ac_state."""
+        self._device.sync_ac_state(power, temp, mode, fan_speed, swing, preset)
 
     def set_swing_mode(self, swing_mode: str) -> None:
         """Set new target swing operation."""

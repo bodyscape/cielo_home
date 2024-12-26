@@ -125,30 +125,30 @@ class CieloHomeDevice:
     #
     #        self._send_msg(action, "", "", default_action="actionControl")
 
-    #    def sync_ac_state(
-    #        self, power: bool, temp: int, mode: str, fan_speed: str, swing: str, preset: str
-    #    ) -> None:
-    #        """None."""
-    #        action = self._get_action()
-    #        action = {
-    #            "power": "on" if power else "off",
-    #            "temp": temp
-    #            if power and temp > 0
-    #            else self._device["latestAction"]["temp"],
-    #            "mode": mode
-    #            if power and mode != ""
-    #           else self._device["latestAction"]["mode"],
-    #            "fanspeed": fan_speed
-    #            if power and fan_speed != ""
-    #            else self._device["latestAction"]["fanspeed"],
-    #           "swing": swing
-    #           if power and swing != ""
-    #            else self._device["latestAction"]["swing"],
-    #            "preset": preset
-    #            if power and preset != ""
-    #            else self._device["latestAction"]["turbo"],
-    #        }
-    #        self._send_msg(action, "", "", default_action="syncState")
+    def sync_ac_state(
+        self, power: bool, temp: int, mode: str, fan_speed: str, swing: str, preset: str
+    ) -> None:
+        """None."""
+        action = self._get_action()
+        action = {
+            "power": "on" if power else "off",
+            "temp": temp
+            if power and temp > 0
+            else self._device["latestAction"]["temp"],
+            "mode": mode
+            if power and mode != ""
+            else self._device["latestAction"]["mode"],
+            "fanspeed": fan_speed
+            if power and fan_speed != ""
+            else self._device["latestAction"]["fanspeed"],
+            "swing": swing
+            if power and swing != ""
+            else self._device["latestAction"]["swing"],
+            "preset": preset
+            if power and preset != ""
+            else self._device["latestAction"]["turbo"],
+        }
+        self._send_msg(action, "", "", default_action="syncState")
 
     def send_light_on(self) -> None:
         """None."""
@@ -185,14 +185,20 @@ class CieloHomeDevice:
         action["turbo"] = value
         self._device["latestAction"]["turbo"] = value
 
-        if self.get_device_type_version() != "BI03" or self.get_device_type_version() != "BI04":
+        if (
+            self.get_device_type_version() != "BI03"
+            or self.get_device_type_version() != "BI04"
+        ):
             value = "on/off"
 
         self._send_msg(action, "turbo", value)
 
     def _send_preset_mode(self, value: int) -> None:
         """None."""
-        if self._device["latestAction"]["mode"] == "auto" and self._device["latestAction"]["preset"] == value:
+        if (
+            self._device["latestAction"]["mode"] == "auto"
+            and self._device["latestAction"]["preset"] == value
+        ):
             return
 
         action = self._get_action()
@@ -200,10 +206,15 @@ class CieloHomeDevice:
         self._device["latestAction"]["mode"] = "auto"
         self._device["latestAction"]["preset"] = value
 
-        self._send_msg(action, "mode", "auto", overrides={'preset': value})
+        self._send_msg(action, "mode", "auto", overrides={"preset": value})
 
     def _send_msg(
-        self, action, action_type, action_value, default_action="actionControl", overrides=None
+        self,
+        action,
+        action_type,
+        action_value,
+        default_action="actionControl",
+        overrides=None,
     ) -> None:
         msg = {
             "action": default_action,
@@ -835,7 +846,7 @@ class CieloHomeDevice:
         with contextlib.suppress(KeyError):
             presets = self._device["breezPresets"]
             if presets:
-                result = {preset['title']: preset['presetId'] for preset in presets}
+                result = {preset["title"]: preset["presetId"] for preset in presets}
                 return {**{"": 0}, **result}
         return []
 
