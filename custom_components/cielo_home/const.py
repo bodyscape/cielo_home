@@ -46,3 +46,5 @@ FAN_FANSPEED_VALUE = "fanspeed"
 
 FOLLOW_ME_ON = "on"
 FOLLOW_ME_OFF = "off"
+
+DEVICE_BREEZ_MAX = "BREEZ-MAX"
