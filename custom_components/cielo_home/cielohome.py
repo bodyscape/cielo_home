@@ -1,4 +1,5 @@
 """None."""
+
 import asyncio
 from collections.abc import Awaitable
 import contextlib
@@ -278,7 +279,7 @@ class CieloHome:
         self._is_running = True
         self._stop_running = False
         try:
-            async with ClientSession() as ws_session:  # noqa: SIM117
+            async with ClientSession() as ws_session:
                 self._ws_session = ws_session
                 async with ws_session.ws_connect(
                     wss_uri,
@@ -462,7 +463,7 @@ class CieloHome:
     def get_ts(self) -> int:
         """None."""
         return int(datetime.now().timestamp())
-        # return int((datetime.utcnow() - datetime.fromtimestamp(0)).total_seconds())  # noqa: DTZ003
+        # return int((datetime.utcnow() - datetime.fromtimestamp(0)).total_seconds())
 
     async def async_get_devices(self):
         """None."""
@@ -566,14 +567,14 @@ class CieloHome:
 
     async def async_get_thermostat_info(self, appliance_ids):
         """Get de the list Devices/Thermostats."""
-        # https://api.smartcielo.com/web/sync/appliances/1?applianceIdList=[785]&
+        # https://api.smartcielo.com/web/sync/db/6?applianceIdList=[1674]
         self._headers["authorization"] = self._access_token
         self._headers["x-api-key"] = self._last_x_api_key
         async with ClientSession() as session:  # noqa: SIM117
             async with session.get(
                 "https://"
                 + URL_API
-                + "/web/sync/appliances/1?applianceIdList=["
+                + "/web/sync/db/6?applianceIdList=["
                 + appliance_ids
                 + "]",
                 headers=self._headers,
