@@ -423,11 +423,25 @@ class CieloHomeDevice:
 
     def get_current_temperature(self) -> float:
         """None."""
-        return float(self._device["latEnv"]["temp"])
+        try:
+            return float(self._device["latEnv"]["temp"])
+        except Exception:
+            _LOGGER.error(
+                "temp value '" + str(self._device["latEnv"]["temp"]) + "' not supported"
+            )
+            return 0
 
     def get_humidity(self) -> float:
         """None."""
-        return self._device["latEnv"]["humidity"]
+        try:
+            return float(self._device["latEnv"]["humidity"])
+        except Exception:
+            _LOGGER.error(
+                "humidity value '"
+                + str(self._device["latEnv"]["humidity"])
+                + "' not supported"
+            )
+            return 0
 
     def get_is_device_fahrenheit(self) -> bool:
         """None."""
