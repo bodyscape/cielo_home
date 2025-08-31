@@ -185,13 +185,17 @@ class CieloHomeDevice:
         action["turbo"] = value
         self._device["latestAction"]["turbo"] = value
 
+        # Keep original logic but fix the OR condition
         if (
             self.get_device_type_version() != "BI03"
-            or self.get_device_type_version() != "BI04"
+            and self.get_device_type_version() != "BI04"
         ):
-            value = "on/off"
+            action_value = "on/off"
+        else:
+            action_value = value
 
-        self._send_msg(action, "turbo", value)
+        _LOGGER.debug(f"Sending turbo command: actionValue='{action_value}' for device {self.get_name()}")
+        self._send_msg(action, "turbo", action_value)
 
     def _send_preset_mode(self, value: int) -> None:
         """None."""
@@ -424,24 +428,30 @@ class CieloHomeDevice:
     def get_current_temperature(self) -> float:
         """None."""
         try:
-            return float(self._device["latEnv"]["temp"])
-        except Exception:
+            temp_value = self._device.get("latEnv", {}).get("temp", 0)
+            if temp_value is None:
+                return 0.0
+            return float(temp_value)
+        except (ValueError, TypeError) as e:
             _LOGGER.error(
-                "temp value '" + str(self._device["latEnv"]["temp"]) + "' not supported"
+                "temp value '%s' not supported: %s", 
+                self._device.get("latEnv", {}).get("temp", "None"), e
             )
-            return 0
+            return 0.0
 
     def get_humidity(self) -> float:
         """None."""
         try:
-            return float(self._device["latEnv"]["humidity"])
-        except Exception:
+            humidity_value = self._device.get("latEnv", {}).get("humidity", 0)
+            if humidity_value is None:
+                return 0.0
+            return float(humidity_value)
+        except (ValueError, TypeError) as e:
             _LOGGER.error(
-                "humidity value '"
-                + str(self._device["latEnv"]["humidity"])
-                + "' not supported"
+                "humidity value '%s' not supported: %s",
+                self._device.get("latEnv", {}).get("humidity", "None"), e
             )
-            return 0
+            return 0.0
 
     def get_is_device_fahrenheit(self) -> bool:
         """None."""
@@ -989,7 +999,9 @@ class CieloHomeDevice:
 
     def state_device_receive(self, device_state):
         """None."""
-        device_state["appliance"] = self._device["appliance"]
+        # Safely copy appliance data if it exists
+        if "appliance" in self._device:
+            device_state["appliance"] = self._device["appliance"]
         self._device = device_state
         self.dispatch_state_timer()
 
