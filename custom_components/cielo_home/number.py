@@ -1,4 +1,5 @@
 """None."""
+
 from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -22,6 +23,10 @@ async def async_setup_entry(
     for device in cw_devices:
         if device.get_fan_modes() is not None:
             entity = CieloHomeTargetTempNumber(device)
+            entities.append(entity)
+
+        if device.get_screenbrightness_available():
+            entity = CieloHomeBacklightBrightness(device)
             entities.append(entity)
 
     async_add_entities(entities)
@@ -65,3 +70,33 @@ class CieloHomeTargetTempNumber(CieloHomeEntity, NumberEntity):
             )
         )
         self._device.send_temperature(temp)
+
+
+class CieloHomeBacklightBrightness(CieloHomeEntity, NumberEntity):
+    """None."""
+
+    def __init__(self, device: CieloHomeDevice) -> None:
+        """None."""
+        super().__init__(
+            device,
+            device.get_name() + " " + "Back light Brightness",
+            device.get_uniqueid() + "_back_light_brightness",
+        )
+        self._attr_icon = "mdi:brightness-4"
+        self._attr_device_class = NumberDeviceClass.BATTERY
+
+        self._attr_mode: NumberMode = NumberMode.AUTO
+        self._attr_native_unit_of_measurement = "%"
+        self._attr_native_step = 1
+        self._device.add_listener(self)
+        self._update_internal_state()
+
+    def _update_internal_state(self):
+        """None."""
+        self._attr_native_value = int(self._device.get_screenbrightness_value())
+        self._attr_native_max_value = 100
+        self._attr_native_min_value = 0
+
+    def set_native_value(self, value: float) -> None:
+        """Set new value."""
+        self._device.send_screenbacklightBrightness(int(value))

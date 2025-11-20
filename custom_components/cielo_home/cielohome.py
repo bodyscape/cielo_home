@@ -86,7 +86,9 @@ class CieloHome:
         main_js_url = ""
         try:
             async with ClientSession() as session:
-                session.headers.add("Cache-Control", "no-cache, no-store, must-revalidate")
+                session.headers.add(
+                    "Cache-Control", "no-cache, no-store, must-revalidate"
+                )
                 session.headers.add("Pragma", "no-cache")
                 session.headers.add("Expires", "0")
                 async with session.get(
@@ -95,6 +97,7 @@ class CieloHome:
                     html_text = await resp.text()
                     # More flexible pattern to find main.js file
                     import re
+
                     main_js_pattern = r'src="(main\.[a-f0-9]+\.js)"'
                     match = re.search(main_js_pattern, html_text)
                     if match:
@@ -104,7 +107,7 @@ class CieloHome:
                         patterns = [
                             r'src="(main\.[^"]+\.js)"',
                             r'href="(main\.[^"]+\.js)"',
-                            r'"(main\.[a-zA-Z0-9]+\.js)"'
+                            r'"(main\.[a-zA-Z0-9]+\.js)"',
                         ]
                         for pattern in patterns:
                             match = re.search(pattern, html_text)
@@ -121,10 +124,10 @@ class CieloHome:
                         # Updated regex pattern to be more flexible
                         patterns = [
                             r"['][A-Za-z0-9]{36,42}[']",  # Original pattern with flexible length
-                            r'"[A-Za-z0-9]{36,42}"',      # Double quotes version
-                            r"[A-Za-z0-9]{36,42}",        # Without quotes
+                            r'"[A-Za-z0-9]{36,42}"',  # Double quotes version
+                            r"[A-Za-z0-9]{36,42}",  # Without quotes
                         ]
-                        
+
                         keys = []
                         for pattern in patterns:
                             x = re.compile(pattern)
@@ -134,7 +137,7 @@ class CieloHome:
                                     clean_key = key.replace("'", "").replace('"', "")
                                     if len(clean_key) >= 36 and clean_key not in keys:
                                         keys.append(clean_key)
-                        
+
                         if len(keys) > 0:
                             self._x_api_keys = keys
                             _LOGGER.debug(f"Found {len(keys)} API keys")
@@ -374,7 +377,11 @@ class CieloHome:
                                         self._last_ts_pong = self.get_ts() + 1
 
                                 with contextlib.suppress(Exception):
-                                    if js_data["message_type"] == "StateUpdate":
+                                    if (
+                                        js_data["message_type"] == "StateUpdate"
+                                        or js_data["message_type"]
+                                        == "DeviceSettingsAck"
+                                    ):
                                         for listener in self.__event_listener:
                                             listener.data_receive(js_data)
 
@@ -457,7 +464,10 @@ class CieloHome:
     def send_action(self, msg) -> None:
         """None."""
         # msg["token"] = self._access_token
-        msg["mid"] = self._session_id
+        with contextlib.suppress(KeyError):
+            if msg["mid"] == "":
+                msg["mid"] = self._session_id
+
         msg["ts"] = self.get_ts()
 
         # to be sure each msg have different ts, when 2 msg are send quickly
@@ -506,7 +516,7 @@ class CieloHome:
 
         appliance_ids = ""
         unique_appliance_ids = set()  # Use a set to track unique appliance IDs
-        
+
         if devices is not None:
             for device in devices:
                 appliance_id: str = str(device["applianceId"])
@@ -543,13 +553,13 @@ class CieloHome:
                         device["appliance"] = appliance
                         appliance_attached = True
                         break
-                
+
                 # If no appliance data was found, log a warning
                 if not appliance_attached:
                     _LOGGER.warning(
                         "No appliance data found for device '%s' with appliance ID %s",
                         device.get("deviceName", "Unknown"),
-                        device_appliance_id
+                        device_appliance_id,
                     )
 
             return devices
@@ -572,25 +582,32 @@ class CieloHome:
         self._headers["authorization"] = self._access_token
         self._headers["x-api-key"] = self._last_x_api_key
         devices = None
-        
+
         # Retry logic for API calls
         max_retries = 3
         for attempt in range(max_retries):
             try:
-                async with ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
+                async with ClientSession(
+                    timeout=aiohttp.ClientTimeout(total=30)
+                ) as session:
                     async with session.get(
                         "https://" + URL_API + "/web/devices?limit=420",
                         headers=self._headers,
                     ) as response:
                         if response.status == 200:
                             repjson = await response.json()
-                            if repjson["status"] == 200 and repjson["message"] == "SUCCESS":
+                            if (
+                                repjson["status"] == 200
+                                and repjson["message"] == "SUCCESS"
+                            ):
                                 devices = repjson["data"]["listDevices"]
                                 if _LOGGER.isEnabledFor(logging.DEBUG):
                                     _LOGGER.debug("devices : %s", json.dumps(devices))
                                 break
                             else:
-                                _LOGGER.warning(f"API returned error: {repjson.get('message', 'Unknown error')}")
+                                _LOGGER.warning(
+                                    f"API returned error: {repjson.get('message', 'Unknown error')}"
+                                )
                         elif response.status == 401:
                             _LOGGER.info("Unauthorized, refreshing token...")
                             if await self.try_async_refresh_token():
@@ -600,16 +617,20 @@ class CieloHome:
                                 _LOGGER.error("Failed to refresh token")
                                 break
                         else:
-                            _LOGGER.warning(f"HTTP {response.status}: {await response.text()}")
-                            
+                            _LOGGER.warning(
+                                f"HTTP {response.status}: {await response.text()}"
+                            )
+
             except asyncio.TimeoutError:
                 _LOGGER.warning(f"Timeout on attempt {attempt + 1}/{max_retries}")
                 if attempt < max_retries - 1:
-                    await asyncio.sleep(2 ** attempt)  # Exponential backoff
+                    await asyncio.sleep(2**attempt)  # Exponential backoff
             except Exception as e:
-                _LOGGER.error(f"Error getting devices on attempt {attempt + 1}/{max_retries}: {e}")
+                _LOGGER.error(
+                    f"Error getting devices on attempt {attempt + 1}/{max_retries}: {e}"
+                )
                 if attempt < max_retries - 1:
-                    await asyncio.sleep(2 ** attempt)  # Exponential backoff
+                    await asyncio.sleep(2**attempt)  # Exponential backoff
 
         devices_supported: list = []
 
@@ -620,7 +641,9 @@ class CieloHome:
                     if appliance_id and appliance_id != "0":
                         devices_supported.append(device)
                     else:
-                        _LOGGER.warning(f"Device {device.get('deviceName', 'Unknown')} has invalid appliance ID: {appliance_id}")
+                        _LOGGER.warning(
+                            f"Device {device.get('deviceName', 'Unknown')} has invalid appliance ID: {appliance_id}"
+                        )
                 except Exception as e:
                     _LOGGER.error(f"Error processing device: {e}")
                     continue

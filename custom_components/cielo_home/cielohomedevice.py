@@ -150,6 +150,18 @@ class CieloHomeDevice:
         }
         self._send_msg(action, "", "", default_action="syncState")
 
+    def send_screenbacklight_off(self) -> None:
+        self._device["deviceSettings"]["screenDisplayValue"] = "0"
+        self._send_msg_setting("H0")
+
+    def send_screenbacklight_on(self) -> None:
+        self._device["deviceSettings"]["screenDisplayValue"] = "1"
+        self._send_msg_setting("H1")
+
+    def send_screenbacklightBrightness(self, value: int) -> None:
+        self._device["deviceSettings"]["brightnessValue"] = str(value)
+        self._send_msg_setting("H2" + str(value))
+
     def send_light_on(self) -> None:
         """None."""
         self._send_light("on")
@@ -194,7 +206,9 @@ class CieloHomeDevice:
         else:
             action_value = value
 
-        _LOGGER.debug(f"Sending turbo command: actionValue='{action_value}' for device {self.get_name()}")
+        _LOGGER.debug(
+            f"Sending turbo command: actionValue='{action_value}' for device {self.get_name()}"
+        )
         self._send_msg(action, "turbo", action_value)
 
     def _send_preset_mode(self, value: int) -> None:
@@ -212,6 +226,32 @@ class CieloHomeDevice:
 
         self._send_msg(action, "mode", "auto", overrides={"preset": value})
 
+    def _get_base_msg(
+        self,
+        action,
+        actionSource="WEB",
+    ) -> dict:
+        return {
+            "action": action,
+            "actionSource": actionSource,
+            "macAddress": self.get_mac_address(),
+            "user_id": self._user_id,
+            "fw_version": self.get_fw_version(),
+            "deviceTypeVersion": self.get_device_type_version(),
+            "mid": "",
+            "connection_source": self._connection_source
+            if self._force_connection_source
+            else self.get_connection_source(),
+            "application_version": "1.4.4",
+            "ts": 0,
+        }
+
+    def _send_msg_setting(self, action_string) -> None:
+        msg = self._get_base_msg("deviceSettings")
+        msg["mid"] = "WEB"
+        msg["actionString"] = action_string
+        self._api.send_action(msg)
+
     def _send_msg(
         self,
         action,
@@ -220,27 +260,17 @@ class CieloHomeDevice:
         default_action="actionControl",
         overrides=None,
     ) -> None:
-        msg = {
-            "action": default_action,
-            "macAddress": self.get_mac_address(),
-            "deviceTypeVersion": self.get_device_type_version(),
-            "fwVersion": self.get_fw_version(),
-            "actionSource": "WEB",
-            "applianceType": self.get_appliance_type(),
-            "applianceId": self.get_appliance_id(),
-            "myRuleConfiguration": self.get_my_rule_configuration(),
-            "connection_source": self._connection_source
-            if self._force_connection_source
-            else self.get_connection_source(),
-            "user_id": self._user_id,
-            # "token": "",
-            "mid": "",
-            "preset": 0,
-            "application_version": "1.2.0",
-            "ts": 0,
-            "actions": action,
-            "oldPower": self._old_power,
-        }
+        msg = self._get_base_msg(default_action)
+
+        msg["mid"] = "WEB"
+        msg["fwVersion"] = self.get_fw_version()
+        msg["applianceType"] = self.get_appliance_type()
+        msg["applianceId"] = self.get_appliance_id()
+        msg["myRuleConfiguration"] = self.get_my_rule_configuration()
+        msg["user_id"] = self._user_id
+        msg["preset"] = 0
+        msg["actions"] = action
+        msg["oldPower"] = self._old_power
 
         if default_action == "actionControl":
             msg["actionType"] = action_type
@@ -434,8 +464,9 @@ class CieloHomeDevice:
             return float(temp_value)
         except (ValueError, TypeError) as e:
             _LOGGER.error(
-                "temp value '%s' not supported: %s", 
-                self._device.get("latEnv", {}).get("temp", "None"), e
+                "temp value '%s' not supported: %s",
+                self._device.get("latEnv", {}).get("temp", "None"),
+                e,
             )
             return 0.0
 
@@ -449,7 +480,8 @@ class CieloHomeDevice:
         except (ValueError, TypeError) as e:
             _LOGGER.error(
                 "humidity value '%s' not supported: %s",
-                self._device.get("latEnv", {}).get("humidity", "None"), e
+                self._device.get("latEnv", {}).get("humidity", "None"),
+                e,
             )
             return 0.0
 
@@ -585,6 +617,59 @@ class CieloHomeDevice:
     def get_connection_source(self) -> int:
         """None."""
         return self._device["connectionSource"]
+
+    def get_screenDisplayIsOn(self) -> bool:
+        """None."""
+        return self._device["deviceSettings"]["screenDisplayValue"] == "1"
+
+    def get_screenDisplay_available(self) -> bool:
+        """None."""
+        with contextlib.suppress(KeyError):
+            return self._device["deviceSettings"]["screenDisplayValue"] != ""
+
+        return False
+
+    def get_screenIdleScreenTimeout_value(self) -> str:
+        """None."""
+        with contextlib.suppress(KeyError):
+            return self._device["deviceSettings"]["idleScreenTimeout"]
+
+        return ""
+
+    def get_screenIdleScreenTimeout_available(self) -> bool:
+        """None."""
+        with contextlib.suppress(KeyError):
+            return self._device["deviceSettings"]["idleScreenTimeout"] != ""
+
+        return False
+
+    def get_screenbrightness_value(self) -> str:
+        """None."""
+        with contextlib.suppress(KeyError):
+            return self._device["deviceSettings"]["brightnessValue"]
+
+        return ""
+
+    def get_screenbrightness_available(self) -> bool:
+        """None."""
+        with contextlib.suppress(KeyError):
+            return self._device["deviceSettings"]["brightnessValue"] != ""
+
+        return False
+
+    def get_screenidlebrightness_available(self) -> bool:
+        """None."""
+        with contextlib.suppress(KeyError):
+            return self._device["deviceSettings"]["idleBrightnessValue"] != ""
+
+        return False
+
+    def get_screenidlebrightness_value(self) -> str:
+        """None."""
+        with contextlib.suppress(KeyError):
+            return self._device["deviceSettings"]["idleBrightnessValue"]
+
+        return False
 
     def get_appliance_type(self) -> str:
         """None."""
@@ -967,32 +1052,52 @@ class CieloHomeDevice:
     def data_receive(self, data) -> None:
         """None."""
         if data["mac_address"] == self.get_mac_address():
-            self._device["latEnv"]["temp"] = data["lat_env_var"]["temperature"]
-            self._device["latEnv"]["humidity"] = data["lat_env_var"]["humidity"]
-            if data["device_status"] == 0 and data["action"]["device_status"] == "on":
-                self._device["deviceStatus"] = 1
-            else:
-                self._device["deviceStatus"] = data["device_status"]
-            self._device["latestAction"]["temp"] = data["action"]["temp"]
-            self._device["latestAction"]["fanspeed"] = data["action"]["fanspeed"]
-            self._device["latestAction"]["mode"] = data["action"]["mode"]
-            self._device["latestAction"]["power"] = data["action"]["power"]
-            self._old_power = self._device["latestAction"]["power"]
+            with contextlib.suppress(KeyError):
+                if data["message_type"] == "StateUpdate":
+                    self._device["latEnv"]["temp"] = data["lat_env_var"]["temperature"]
+                    self._device["latEnv"]["humidity"] = data["lat_env_var"]["humidity"]
+                    if (
+                        data["device_status"] == 0
+                        and data["action"]["device_status"] == "on"
+                    ):
+                        self._device["deviceStatus"] = 1
+                    else:
+                        self._device["deviceStatus"] = data["device_status"]
+                    self._device["latestAction"]["temp"] = data["action"]["temp"]
+                    self._device["latestAction"]["fanspeed"] = data["action"][
+                        "fanspeed"
+                    ]
+                    self._device["latestAction"]["mode"] = data["action"]["mode"]
+                    self._device["latestAction"]["power"] = data["action"]["power"]
+                    self._old_power = self._device["latestAction"]["power"]
+
+                    with contextlib.suppress(KeyError):
+                        self._device["latestAction"]["swing"] = data["action"]["swing"]
+
+                    with contextlib.suppress(KeyError):
+                        self._device["latestAction"]["turbo"] = data["action"]["turbo"]
+
+                    with contextlib.suppress(KeyError):
+                        self._device["latestAction"]["light"] = data["action"]["light"]
+
+                    with contextlib.suppress(KeyError):
+                        self._device["latestAction"]["followme"] = data["action"][
+                            "followme"
+                        ]
+
+                    with contextlib.suppress(KeyError):
+                        self._device["latestAction"]["preset"] = data["action"][
+                            "preset"
+                        ]
 
             with contextlib.suppress(KeyError):
-                self._device["latestAction"]["swing"] = data["action"]["swing"]
+                if data["message_type"] == "DeviceSettingsAck":
+                    if data["H"] == "1":
+                        self._device["deviceSettings"]["screenDisplayValue"] = "1"
+                    else:
+                        self._device["deviceSettings"]["screenDisplayValue"] = "0"
 
-            with contextlib.suppress(KeyError):
-                self._device["latestAction"]["turbo"] = data["action"]["turbo"]
-
-            with contextlib.suppress(KeyError):
-                self._device["latestAction"]["light"] = data["action"]["light"]
-
-            with contextlib.suppress(KeyError):
-                self._device["latestAction"]["followme"] = data["action"]["followme"]
-
-            with contextlib.suppress(KeyError):
-                self._device["latestAction"]["preset"] = data["action"]["preset"]
+                    self._device["deviceSettings"]["brightnessValue"] = data["H2"]
 
             self.dispatch_state_timer()
             # self.dispatch_state_updated()

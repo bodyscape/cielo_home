@@ -1,4 +1,5 @@
 """None."""
+
 from typing import Any
 
 from homeassistant.components.climate import HVACMode
@@ -36,6 +37,12 @@ async def async_setup_entry(
             entities.append(
                 CieloHomeSwitchFollowMe(
                     device, "Follow Me", device.get_uniqueid() + "_follow_me"
+                )
+            )
+        if device.get_screenDisplay_available():
+            entities.append(
+                CieloHomeSwitchBackLight(
+                    device, "Back light", device.get_uniqueid() + "_backlight"
                 )
             )
 
@@ -103,6 +110,40 @@ class CieloHomeSwitchPower(CieloHomeEntity, SwitchEntity):
     def _update_internal_state(self):
         """None."""
         self._attr_is_on = self.is_power_on()
+
+
+class CieloHomeSwitchBackLight(CieloHomeEntity, SwitchEntity):
+    """Representation of a Bond generic device."""
+
+    def __init__(self, device: CieloHomeDevice, name, unique_id) -> None:
+        """None."""
+        super().__init__(device, device.get_name() + " " + name, unique_id)
+        self._attr_is_on = self.is_backlight_on()
+        self._attr_available = self.is_available()
+        self._attr_icon = "mdi:lightbulb"
+        self._device.add_listener(self)
+
+    def turn_on(self, **kwargs: Any) -> None:
+        """Turn follow me on."""
+        self._device.send_screenbacklight_on()
+        self._update_internal_state()
+
+    def turn_off(self, **kwargs: Any) -> None:
+        """Turn follow me off."""
+        self._device.send_screenbacklight_off()
+        self._update_internal_state()
+
+    def is_backlight_on(self, **kwargs: Any) -> bool:
+        """None."""
+        return self._device.get_screenDisplayIsOn()
+
+    def is_available(self) -> bool:
+        return self._device.get_screenDisplay_available()
+
+    def _update_internal_state(self):
+        """None."""
+        self._attr_available = self.is_available()
+        self._attr_is_on = self.is_backlight_on()
 
 
 class CieloHomeSwitchFollowMe(CieloHomeEntity, SwitchEntity):
