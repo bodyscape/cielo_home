@@ -1,4 +1,5 @@
 """Config flow for Cielo Home integration."""
+
 from __future__ import annotations
 
 import logging
@@ -6,8 +7,13 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant import config_entries
-from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 
@@ -48,10 +54,18 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     return {"title": "Cielo Home"}
 
 
-class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class ConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Cielo Home."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: ConfigEntry,
+    ) -> OptionsFlowHandler:
+        """Get the options flow for this handler."""
+        return OptionsFlowHandler()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -87,3 +101,43 @@ class CannotConnect(HomeAssistantError):
 
 class InvalidAuth(HomeAssistantError):
     """Error to indicate there is invalid auth."""
+
+
+class OptionsFlowHandler(OptionsFlow):
+    """Handle Omnilogic client options."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage options."""
+
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        "access_token", default=self.config_entry.data["access_token"]
+                    ): str,
+                    vol.Required(
+                        "refresh_token", default=self.config_entry.data["refresh_token"]
+                    ): str,
+                    vol.Required(
+                        "session_id", default=self.config_entry.data["session_id"]
+                    ): str,
+                    vol.Required(
+                        "user_id", default=self.config_entry.data["user_id"]
+                    ): str,
+                    vol.Required(
+                        "force_connection_source",
+                        default=self.config_entry.data["force_connection_source"],
+                    ): bool,
+                    vol.Required(
+                        "connection_source",
+                        default=self.config_entry.data["connection_source"],
+                    ): bool,
+                }
+            ),
+        )
