@@ -725,7 +725,10 @@ class CieloHomeDevice:
 
     def get_status(self) -> bool:
         """None."""
-        return self._device["deviceStatus"] == 1 or self._device["deviceStatus"] == "on"
+        return (
+            self._device["deviceStatus"] == 1
+            or str(self._device["deviceStatus"]) == "on"
+        )
 
     def get_status_str(self) -> str:
         """None."""

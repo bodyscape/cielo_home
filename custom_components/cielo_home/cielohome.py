@@ -35,6 +35,7 @@ class CieloHome:
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Set up Cielo Home api."""
+        self.can_reload: bool = True
         self._is_running: bool = True
         self._stop_running: bool = False
         self._access_token: str = ""
@@ -208,6 +209,7 @@ class CieloHome:
                 if self._entry is not None:
                     config_data = self._entry.data.copy()
                     config_data["x_api_key"] = key
+                    self.can_reload = False
                     self.hass.config_entries.async_update_entry(
                         self._entry, data=config_data
                     )
@@ -287,6 +289,7 @@ class CieloHome:
                                     config_data = self._entry.data.copy()
                                     config_data["access_token"] = self._access_token
                                     config_data["refresh_token"] = self._refresh_token
+                                    self.can_reload = False
                                     self.hass.config_entries.async_update_entry(
                                         self._entry, data=config_data
                                     )

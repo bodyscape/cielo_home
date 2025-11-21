@@ -87,4 +87,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def update_listener(hass: HomeAssistant, config_entry: ConfigEntry):
     """Handle options update."""
-    hass.config_entries.async_schedule_reload(config_entry.entry_id)
+
+    api: CieloHome = hass.data[DOMAIN][config_entry.entry_id]
+    if api.can_reload:
+        _LOGGER.info("Reload integration")
+        hass.config_entries.async_schedule_reload(config_entry.entry_id)
+    else:
+        api.can_reload = True
