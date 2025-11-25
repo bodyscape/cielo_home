@@ -7,6 +7,7 @@
           "refresh_token": "refresh_token",
           "session_id": "session_id",
           "user_id": "user_id",
+          "x_api_key": "x_api_key",
           "force_connection_source": "force_connection_source",
           "connection_source": "connection_source"
         }

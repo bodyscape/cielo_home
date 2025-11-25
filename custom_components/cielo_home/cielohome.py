@@ -13,6 +13,7 @@ from threading import Lock, Timer
 
 import aiohttp
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
+from tomlkit import key
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -57,7 +58,6 @@ class CieloHome:
         self._last_ts_ping: int = 0
         self._last_ts_pong: int = 0
         self._last_connection_ts: int = 0
-        self._x_api_keys: list = None
         self._last_x_api_key: str = None
         self._reconnect_now = False
         self.hass: HomeAssistant = hass
@@ -81,77 +81,13 @@ class CieloHome:
         """None."""
         self.__event_listener.append(listener)
 
-    async def set_x_api_key(self) -> bool:
-        """Get the x_api_key."""
-        login_url = URL_CIELO
-        main_js_url = ""
-        try:
-            async with ClientSession() as session:
-                session.headers.add(
-                    "Cache-Control", "no-cache, no-store, must-revalidate"
-                )
-                session.headers.add("Pragma", "no-cache")
-                session.headers.add("Expires", "0")
-                async with session.get(
-                    login_url + "auth/login?t=" + str(self.get_ts())
-                ) as resp:
-                    html_text = await resp.text()
-                    # More flexible pattern to find main.js file
-                    import re
-
-                    main_js_pattern = r'src="(main\.[a-f0-9]+\.js)"'
-                    match = re.search(main_js_pattern, html_text)
-                    if match:
-                        main_js_url = match.group(1)
-                    else:
-                        # Fallback patterns
-                        patterns = [
-                            r'src="(main\.[^"]+\.js)"',
-                            r'href="(main\.[^"]+\.js)"',
-                            r'"(main\.[a-zA-Z0-9]+\.js)"',
-                        ]
-                        for pattern in patterns:
-                            match = re.search(pattern, html_text)
-                            if match:
-                                main_js_url = match.group(1)
-                                break
-
-            if main_js_url != "":
-                async with ClientSession() as session:
-                    async with session.get(
-                        login_url + main_js_url + "?t=" + str(self.get_ts())
-                    ) as resp:
-                        html_text = await resp.text()
-                        # Updated regex pattern to be more flexible
-                        patterns = [
-                            r"['][A-Za-z0-9]{36,42}[']",  # Original pattern with flexible length
-                            r'"[A-Za-z0-9]{36,42}"',  # Double quotes version
-                            r"[A-Za-z0-9]{36,42}",  # Without quotes
-                        ]
-
-                        keys = []
-                        for pattern in patterns:
-                            x = re.compile(pattern)
-                            found_keys = x.findall(html_text)
-                            if found_keys:
-                                for key in found_keys:
-                                    clean_key = key.replace("'", "").replace('"', "")
-                                    if len(clean_key) >= 36 and clean_key not in keys:
-                                        keys.append(clean_key)
-
-                        if len(keys) > 0:
-                            self._x_api_keys = keys
-                            _LOGGER.debug(f"Found {len(keys)} API keys")
-                        else:
-                            _LOGGER.error("No API keys found in main.js")
-        except Exception as e:
-            _LOGGER.error(f"Error extracting API keys: {e}")
-            return False
-
-        return self._x_api_keys is not None
-
     async def async_auth(
-        self, access_token: str, refresh_token: str, session_id: str, user_id: str
+        self,
+        access_token: str,
+        refresh_token: str,
+        session_id: str,
+        user_id: str,
+        x_api_key: str,
     ) -> bool:
         """Set up Cielo Home auth."""
 
@@ -159,14 +95,15 @@ class CieloHome:
         self._refresh_token = refresh_token
         self._session_id = session_id
         self._user_id = user_id
+        self._last_x_api_key = x_api_key
 
         self._last_refresh_token_ts = self.get_ts()
         self._token_expire_in_ts = self.get_ts() + TIME_REFRESH_TOKEN
 
-        with contextlib.suppress(KeyError):
-            if self._entry is not None:
-                self._last_x_api_key = self._entry.data["x_api_key"]
-        await self.try_async_refresh_token(test=True)
+        # with contextlib.suppress(KeyError):
+        #     if self._entry is not None:
+        #         self._last_x_api_key = self._entry.data["x_api_key"]
+        # await self.try_async_refresh_token(test=True)
 
         if self._access_token != "":
             self.create_websocket_log_exception(False)
@@ -179,43 +116,15 @@ class CieloHome:
         refresh_token: str = "",
         session_id: str = "",
         user_id: str = "",
+        x_api_key: str = "",
         test: bool = False,
     ) -> bool:
         """Set up Cielo Home auth."""
-        if self._last_x_api_key is not None:
-            self._headers["x-api-key"] = self._last_x_api_key
-            res = await self.async_refresh_token(
-                access_token, refresh_token, session_id, user_id, test
-            )
-            if res:
-                return True
 
-        try:
-            await self.set_x_api_key()
-        except Exception:
-            _LOGGER.error(sys.exc_info()[1])
-
-        for key in self._x_api_keys:
-            if self._last_x_api_key is not None:
-                if self._last_x_api_key == key:
-                    continue
-
-            self._headers["x-api-key"] = key
-            res = await self.async_refresh_token(
-                access_token, refresh_token, session_id, user_id, test, False
-            )
-            if res:
-                self._last_x_api_key = key
-                if self._entry is not None:
-                    config_data = self._entry.data.copy()
-                    config_data["x_api_key"] = key
-                    self.can_reload = False
-                    self.hass.config_entries.async_update_entry(
-                        self._entry, data=config_data
-                    )
-                return True
-
-        return False
+        self._headers["x-api-key"] = x_api_key
+        return await self.async_refresh_token(
+            access_token, refresh_token, session_id, user_id, x_api_key, test
+        )
 
     async def async_refresh_token(
         self,
@@ -223,17 +132,12 @@ class CieloHome:
         refresh_token: str = "",
         session_id: str = "",
         user_id: str = "",
+        x_api_key: str = "",
         test: bool = False,
         refreshKey: bool = True,
     ) -> bool:
         """Set up Cielo Home refresh."""
         _LOGGER.debug("Call refreshToken %s", self._headers["x-api-key"])
-
-        if refreshKey:
-            try:
-                await self.set_x_api_key()
-            except Exception:
-                _LOGGER.error(sys.exc_info()[1])
 
         # Opening JSON file
         # fullpath: str = str(pathlib.Path(__file__).parent.resolve()) + "/login.json"
@@ -258,6 +162,7 @@ class CieloHome:
                 self._refresh_token = refresh_token
                 self._session_id = session_id
                 self._user_id = user_id
+                self._last_x_api_key = x_api_key
 
             self._headers["authorization"] = self._access_token
             async with ClientSession() as session:  # noqa: SIM117
@@ -299,6 +204,8 @@ class CieloHome:
                             else:
                                 _LOGGER.debug("Call test refreshToken success")
                             return True
+                    else:
+                        _LOGGER.error("Call refreshToken error %s", response.status)
         except Exception:
             _LOGGER.error(sys.exc_info()[1])
 
