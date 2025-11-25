@@ -13,7 +13,6 @@ from threading import Lock, Timer
 
 import aiohttp
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
-from tomlkit import key
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
