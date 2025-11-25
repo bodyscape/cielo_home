@@ -41,7 +41,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 
     api = CieloHome(hass, None)
 
-    if not await api.try_async_refresh_token(
+    if not await api.async_refresh_token(
         data["access_token"],
         data["refresh_token"],
         data["session_id"],
