@@ -11,7 +11,7 @@ A Home Assistant custom integration to control Cielo Home devices.
 
 ## Configuration
 
-If you have installed a version prior 1.6.0 you need to uninstall the integration and install it again.
+If you have installed a version prior 1.8.7 you need to uninstall the integration and install it again.
 You need to restart HA after the uninstall and after the install.
 
 For find the field in the initial configuration setup follow this.
@@ -33,7 +33,8 @@ For find the field in the initial configuration setup follow this.
 12. After you HA configuration it's done reopen your Chrome and check if you still logged on https://home.cielowigle.com/, if yes logout with the sign out button.
 
 ![image](https://github.com/bodyscape/cielo_home/assets/30115568/96702e55-d4e0-4815-8316-a9a6cfbbab74)
-![image](https://github.com/bodyscape/cielo_home/assets/30115568/19e3d181-6091-4814-8ed8-b222396bc989)
+<img width="431" height="691" alt="image" src="https://github.com/user-attachments/assets/9e19b7bd-5c08-4161-ba1d-4895d65edf69" />
+
 
 
 
