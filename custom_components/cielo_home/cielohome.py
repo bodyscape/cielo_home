@@ -68,6 +68,7 @@ class CieloHome:
             "referer": URL_CIELO,
             "origin": URL_CIELO,
             "user-agent": USER_AGENT,
+            "host": URL_API,
         }
 
     async def close(self):
@@ -99,31 +100,12 @@ class CieloHome:
         self._last_refresh_token_ts = self.get_ts()
         self._token_expire_in_ts = self.get_ts() + TIME_REFRESH_TOKEN
 
-        # with contextlib.suppress(KeyError):
-        #     if self._entry is not None:
-        #         self._last_x_api_key = self._entry.data["x_api_key"]
-        # await self.try_async_refresh_token(test=True)
+        await self.async_refresh_token(test=True)
 
         if self._access_token != "":
             self.create_websocket_log_exception(False)
 
         return True
-
-    async def try_async_refresh_token(
-        self,
-        access_token: str = "",
-        refresh_token: str = "",
-        session_id: str = "",
-        user_id: str = "",
-        x_api_key: str = "",
-        test: bool = False,
-    ) -> bool:
-        """Set up Cielo Home auth."""
-
-        self._headers["x-api-key"] = x_api_key
-        return await self.async_refresh_token(
-            access_token, refresh_token, session_id, user_id, x_api_key, test
-        )
 
     async def async_refresh_token(
         self,
@@ -133,10 +115,9 @@ class CieloHome:
         user_id: str = "",
         x_api_key: str = "",
         test: bool = False,
-        refreshKey: bool = True,
     ) -> bool:
         """Set up Cielo Home refresh."""
-        _LOGGER.debug("Call refreshToken %s", self._headers["x-api-key"])
+        _LOGGER.debug("Call refreshToken %s", x_api_key)
 
         # Opening JSON file
         # fullpath: str = str(pathlib.Path(__file__).parent.resolve()) + "/login.json"
@@ -163,14 +144,19 @@ class CieloHome:
                 self._user_id = user_id
                 self._last_x_api_key = x_api_key
 
-            self._headers["authorization"] = self._access_token
+            headers: dict[str, str] = self._headers
+            headers["authorization"] = self._access_token
+            headers["x-api-key"] = self._last_x_api_key
+
+            data = {
+                "local": "en",
+                "refreshToken": self._refresh_token,
+            }
             async with ClientSession() as session:  # noqa: SIM117
-                async with session.get(
-                    "https://"
-                    + URL_API
-                    + "/web/token/refresh?refreshToken="
-                    + self._refresh_token,
+                async with session.post(
+                    "https://" + URL_API + "/web/token/refresh",
                     headers=self._headers,
+                    json=data,
                 ) as response:
                     if response.status == 200:
                         repjson = await response.json()
@@ -305,9 +291,7 @@ class CieloHome:
                         if now > (self._token_expire_in_ts):
                             self._reconnect_now = True
                             self._token_expire_in_ts = now + 60
-                            self.create_task_log_exception(
-                                self.try_async_refresh_token()
-                            )
+                            self.create_task_log_exception(self.async_refresh_token())
                         elif now - self._last_ts_ping >= TIMER_PING:
                             self._last_ts_ping = now
                             self._last_ts_pong = now
@@ -368,6 +352,7 @@ class CieloHome:
             else:
                 _LOGGER.debug("Reconnection")
             self._last_ts_ping = 0
+            await self.async_refresh_token()
             self.create_websocket_log_exception(True)
 
     def send_action(self, msg) -> None:
@@ -486,7 +471,7 @@ class CieloHome:
     async def async_get_thermostats(self):
         """Get de the list Devices/Thermostats."""
         if self._last_x_api_key is None:
-            await self.try_async_refresh_token()
+            await self.async_refresh_token()
 
         self._headers["authorization"] = self._access_token
         self._headers["x-api-key"] = self._last_x_api_key
@@ -519,7 +504,7 @@ class CieloHome:
                                 )
                         elif response.status == 401:
                             _LOGGER.info("Unauthorized, refreshing token...")
-                            if await self.try_async_refresh_token():
+                            if await self.async_refresh_token():
                                 self._headers["authorization"] = self._access_token
                                 continue
                             else:

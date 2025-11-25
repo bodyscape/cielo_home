@@ -39,18 +39,18 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
     """Validate the user input allows us to connect."""
 
-    # api = CieloHome(hass, None)
+    api = CieloHome(hass, None)
 
-    # if not await api.try_async_refresh_token(
-    #    data["access_token"],
-    #    data["refresh_token"],
-    #    data["session_id"],
-    #    data["user_id"],
-    #    data["x_api_key"],
-    #    True,
-    # ):
-    #     _LOGGER.error("Failed to login to Cielo Home")
-    #    # raise InvalidAuth
+    if not await api.try_async_refresh_token(
+        data["access_token"],
+        data["refresh_token"],
+        data["session_id"],
+        data["user_id"],
+        data["x_api_key"],
+        True,
+    ):
+        _LOGGER.error("Failed to login to Cielo Home")
+        raise InvalidAuth
 
     # Return info that you want to store in the config entry.
     return {"title": "Cielo Home"}
