@@ -29,6 +29,10 @@ async def async_setup_entry(
             entity = CieloHomeBacklightBrightness(device)
             entities.append(entity)
 
+        if device.get_temperature_offset() is not None:
+            entity = CieloHomeTemperatureOffsetNumber(device)
+            entities.append(entity)
+
     async_add_entities(entities)
 
 
@@ -100,3 +104,32 @@ class CieloHomeBacklightBrightness(CieloHomeEntity, NumberEntity):
     def set_native_value(self, value: float) -> None:
         """Set new value."""
         self._device.send_screenbacklightBrightness(int(value))
+
+
+class CieloHomeTemperatureOffsetNumber(CieloHomeEntity, NumberEntity):
+    """None."""
+
+    def __init__(self, device: CieloHomeDevice) -> None:
+        """None."""
+        super().__init__(
+            device,
+            device.get_name() + " " + "Temperature Offset",
+            device.get_uniqueid() + "_temperature_offset",
+        )
+        self._attr_icon = "mdi:plus-minus-variant"
+        # No device_class: this is a temperature delta, not an absolute reading.
+        self._attr_mode: NumberMode = NumberMode.SLIDER
+        self._attr_native_unit_of_measurement = self._device.get_unit_of_temperature()
+        self._attr_native_step = 1
+        self._attr_native_min_value = -15
+        self._attr_native_max_value = 15
+        self._device.add_listener(self)
+        self._update_internal_state()
+
+    def _update_internal_state(self):
+        """None."""
+        self._attr_native_value = self._device.get_temperature_offset()
+
+    def set_native_value(self, value: float) -> None:
+        """Set new value."""
+        self._device.send_temperature_offset(int(value))
