@@ -117,7 +117,6 @@ class CieloHomeTemperatureOffsetNumber(CieloHomeEntity, NumberEntity):
             device.get_uniqueid() + "_temperature_offset",
         )
         self._attr_icon = "mdi:plus-minus-variant"
-        # No device_class: this is a temperature delta, not an absolute reading.
         self._attr_mode: NumberMode = NumberMode.SLIDER
         self._attr_native_unit_of_measurement = self._device.get_unit_of_temperature()
         self._attr_native_step = 1

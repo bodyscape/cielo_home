@@ -479,14 +479,9 @@ class CieloHomeDevice:
         if delta == 0:
             return
 
-        # Calibration protocol caps single-frame magnitude at 8; longer
-        # traversals require a follow-up call from the user.
-        magnitude = abs(delta)
-        if magnitude > 8:
-            magnitude = 8
-
+        magnitude = min(abs(delta), 8)
         sign_digit = "1" if delta > 0 else "2"
-        self._send_msg_calibration("JTSC:" + sign_digit + str(magnitude))
+        self._send_msg_calibration(f"JTSC:{sign_digit}{magnitude}")
 
     def get_current_temperature(self) -> float:
         """None."""
