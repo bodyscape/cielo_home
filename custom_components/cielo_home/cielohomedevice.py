@@ -465,6 +465,29 @@ class CieloHomeDevice:
         """None."""
         self.send_temperature(int(self._device["latestAction"]["temp"]) - 1)
 
+    def send_temperature_offset(self, value: int) -> None:
+        """None."""
+        current = self.get_temperature_offset()
+        if current is None:
+            _LOGGER.warning(
+                "Cannot set temperature offset on %s: current offset unknown",
+                self.get_name(),
+            )
+            return
+
+        delta = int(value) - current
+        if delta == 0:
+            return
+
+        # Calibration protocol caps single-frame magnitude at 8; longer
+        # traversals require a follow-up call from the user.
+        magnitude = abs(delta)
+        if magnitude > 8:
+            magnitude = 8
+
+        sign_digit = "1" if delta > 0 else "2"
+        self._send_msg_calibration("JTSC:" + sign_digit + str(magnitude))
+
     def get_current_temperature(self) -> float:
         """None."""
         try:
@@ -715,6 +738,12 @@ class CieloHomeDevice:
     def get_target_temperature(self) -> float:
         """None."""
         return float(self._device["latestAction"]["temp"])
+
+    def get_temperature_offset(self) -> int | None:
+        """None."""
+        with contextlib.suppress(KeyError, TypeError, ValueError):
+            return int(self._device["tempCalibrationOffset"])
+        return None
 
     def get_turbo(self) -> str:
         """None."""
@@ -1111,6 +1140,12 @@ class CieloHomeDevice:
                         self._device["deviceSettings"]["screenDisplayValue"] = "0"
 
                     self._device["deviceSettings"]["brightnessValue"] = data["H2"]
+
+            with contextlib.suppress(KeyError):
+                if data["message_type"] == "CalibrationAck":
+                    self._device["tempCalibrationOffset"] = data[
+                        "temp_calibration_offset"
+                    ]
 
             self.dispatch_state_timer()
             # self.dispatch_state_updated()
