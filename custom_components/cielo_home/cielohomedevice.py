@@ -252,6 +252,16 @@ class CieloHomeDevice:
         msg["actionString"] = action_string
         self._api.send_action(msg)
 
+    def _send_msg_calibration(self, action_string) -> None:
+        """None."""
+        # Calibration frames use snake_case mac_address and action_string,
+        # unlike the camelCase used by actionControl/deviceSettings frames.
+        msg = self._get_base_msg("calibration")
+        msg["mac_address"] = msg.pop("macAddress")
+        msg["action_string"] = action_string
+        msg["mid"] = "WEB"
+        self._api.send_action(msg)
+
     def _send_msg(
         self,
         action,

@@ -276,6 +276,8 @@ class CieloHome:
                                         js_data["message_type"] == "StateUpdate"
                                         or js_data["message_type"]
                                         == "DeviceSettingsAck"
+                                        or js_data["message_type"]
+                                        == "CalibrationAck"
                                     ):
                                         for listener in self.__event_listener:
                                             listener.data_receive(js_data)
