@@ -135,3 +135,32 @@ sync_ac_state:
           options:
             - "none"
             - "Turbo"
+
+# Service ID
+set_temperature_offset:
+  # Service name as shown in UI
+  name: Set Temperature Offset
+  # Description of the service
+  description: Set the temperature calibration offset (delta) applied to the device's room temperature reading. Per-call magnitude is capped at 8 by the protocol; reaching the extremes of the supported range may require multiple calls.
+  # If the service accepts entity IDs, target allows the user to specify entities by entity, device, or area.
+  target:
+  # Different fields that your service accepts
+  fields:
+    # Key of the field
+    offset:
+      # Field name as shown in UI
+      name: Offset
+      # Description of the field
+      description: Calibration offset to apply, in the device's temperature unit.
+      # Whether or not field is required (default = false)
+      required: true
+      # Example value that can be passed for this field
+      example: 2
+      # The default field value
+      default: 0
+      # Selector to control the input UI for this field
+      selector:
+        number:
+          min: -15
+          max: 15
+          step: 1

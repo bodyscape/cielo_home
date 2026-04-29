@@ -82,6 +82,16 @@ async def async_setup_entry(
         "async_sync_ac_state",
     )
 
+    platform.async_register_entity_service(
+        "set_temperature_offset",
+        {
+            vol.Required("offset"): vol.All(
+                vol.Coerce(int), vol.Range(min=-15, max=15)
+            ),
+        },
+        "async_set_temperature_offset",
+    )
+
 
 class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
     """Representation of a Cielo Home thermostat."""
@@ -167,6 +177,10 @@ class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
     ) -> None:
         """Sync_ac_state."""
         self._device.sync_ac_state(power, temp, mode, fan_speed, swing, preset)
+
+    async def async_set_temperature_offset(self, offset: int) -> None:
+        """Set the temperature calibration offset."""
+        self._device.send_temperature_offset(offset)
 
     def set_swing_mode(self, swing_mode: str) -> None:
         """Set new target swing operation."""
