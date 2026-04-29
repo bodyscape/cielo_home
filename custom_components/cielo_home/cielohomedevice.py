@@ -252,6 +252,16 @@ class CieloHomeDevice:
         msg["actionString"] = action_string
         self._api.send_action(msg)
 
+    def _send_msg_calibration(self, action_string) -> None:
+        """None."""
+        # Calibration frames use snake_case mac_address and action_string,
+        # unlike the camelCase used by actionControl/deviceSettings frames.
+        msg = self._get_base_msg("calibration")
+        msg["mac_address"] = msg.pop("macAddress")
+        msg["action_string"] = action_string
+        msg["mid"] = "WEB"
+        self._api.send_action(msg)
+
     def _send_msg(
         self,
         action,
@@ -454,6 +464,24 @@ class CieloHomeDevice:
     def send_temperatureDown(self) -> None:
         """None."""
         self.send_temperature(int(self._device["latestAction"]["temp"]) - 1)
+
+    def send_temperature_offset(self, value: int) -> None:
+        """None."""
+        current = self.get_temperature_offset()
+        if current is None:
+            _LOGGER.warning(
+                "Cannot set temperature offset on %s: current offset unknown",
+                self.get_name(),
+            )
+            return
+
+        delta = int(value) - current
+        if delta == 0:
+            return
+
+        magnitude = min(abs(delta), 8)
+        sign_digit = "1" if delta > 0 else "2"
+        self._send_msg_calibration(f"JTSC:{sign_digit}{magnitude}")
 
     def get_current_temperature(self) -> float:
         """None."""
@@ -705,6 +733,12 @@ class CieloHomeDevice:
     def get_target_temperature(self) -> float:
         """None."""
         return float(self._device["latestAction"]["temp"])
+
+    def get_temperature_offset(self) -> int | None:
+        """None."""
+        with contextlib.suppress(KeyError, TypeError, ValueError):
+            return int(self._device["tempCalibrationOffset"])
+        return None
 
     def get_turbo(self) -> str:
         """None."""
@@ -1101,6 +1135,12 @@ class CieloHomeDevice:
                         self._device["deviceSettings"]["screenDisplayValue"] = "0"
 
                     self._device["deviceSettings"]["brightnessValue"] = data["H2"]
+
+            with contextlib.suppress(KeyError):
+                if data["message_type"] == "CalibrationAck":
+                    self._device["tempCalibrationOffset"] = data[
+                        "temp_calibration_offset"
+                    ]
 
             self.dispatch_state_timer()
             # self.dispatch_state_updated()
