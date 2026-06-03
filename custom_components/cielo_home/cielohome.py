@@ -5,11 +5,13 @@ from collections.abc import Awaitable
 import contextlib
 import copy
 from datetime import datetime
+import hashlib
 import json
 import logging
 import re
 import sys
 from threading import Lock, Timer
+import uuid
 
 import aiohttp
 from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
@@ -17,7 +19,16 @@ from aiohttp import ClientSession, ClientWebSocketResponse, WSMsgType
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import URL_API, URL_API_WSS, URL_CIELO, USER_AGENT
+from .const import (
+    IOS_USER_AGENT,
+    IOS_X_API_KEY,
+    URL_API,
+    URL_API_LOGIN,
+    URL_API_WSS,
+    URL_CIELO,
+    USER_AGENT,
+    WEB_X_API_KEY,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -195,6 +206,72 @@ class CieloHome:
             _LOGGER.error(sys.exc_info()[1])
 
         return False
+
+    async def async_login(self, user_id: str, password: str) -> dict | None:
+        """Log in with email + password via the mobile endpoint (no captcha).
+
+        Returns the token bundle the config entry needs, or None on failure.
+        The password is sent as a SHA-256 hash, matching the apps. Login uses
+        the iOS app key; the returned bundle uses the WEB key, which is what the
+        integration's /web/* endpoints require.
+        """
+        pwd_hash = hashlib.sha256(password.encode("utf-8")).hexdigest()
+        payload = {
+            "user": {
+                "isDeviceCountRequired": 1,
+                "isSmartHVAC": 1,
+                "ipAddress": "",
+                "deviceTokenId": "N/A",
+                "mobileDeviceId": uuid.uuid4().hex[:8].upper(),
+                "deviceType": "iPhone17,1",
+                "appType": "iOS",
+                "userId": user_id,
+                "password": pwd_hash,
+                "timeZone": "-04:00",
+                "mobileDeviceName": "iPhone",
+                "locale": "en",
+                "appVersion": "4.3.0",
+            }
+        }
+        headers = {
+            "accept": "*/*",
+            "content-type": "application/json",
+            "x-api-key": IOS_X_API_KEY,
+            "user-agent": IOS_USER_AGENT,
+        }
+        try:
+            async with ClientSession() as session:  # noqa: SIM117
+                async with session.post(
+                    "https://" + URL_API + "/" + URL_API_LOGIN,
+                    headers=headers,
+                    json=payload,
+                ) as response:
+                    if response.status != 200:
+                        _LOGGER.error("Cielo login HTTP %s", response.status)
+                        return None
+                    repjson = await response.json()
+                    if repjson.get("status") != 200:
+                        _LOGGER.error(
+                            "Cielo login failed: %s", repjson.get("message")
+                        )
+                        return None
+                    user = repjson["data"]["user"]
+                    # The mobile login does not return a sessionId; generate a
+                    # client-side identifier for the websocket (the web app uses
+                    # "<deviceName>-<timestamp>").
+                    session_id = user.get("sessionId") or (
+                        "ha-" + str(int(datetime.now().timestamp() * 1000))
+                    )
+                    return {
+                        "access_token": user["accessToken"],
+                        "refresh_token": user["refreshToken"],
+                        "session_id": session_id,
+                        "user_id": user["userId"],
+                        "x_api_key": WEB_X_API_KEY,
+                    }
+        except Exception:
+            _LOGGER.error(sys.exc_info()[1])
+        return None
 
     async def async_connect_wss(self, update_state: bool = False):
         """None."""
