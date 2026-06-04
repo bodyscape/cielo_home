@@ -8,6 +8,17 @@ URL_API_WSS = "apiwss.smartcielo.com"
 URL_CIELO = "https://home.cielowigle.com/"
 USER_AGENT = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"
 
+# Email/password login via the mobile endpoint (no captcha, unlike the web app).
+URL_API_LOGIN = "user/smarthvac/login/1"
+# Static app key the iOS app sends; required for the login endpoint.
+IOS_X_API_KEY = "T90bwfODtWaIUreVJtroN3itKWquNnUGRYiYUsf0"
+# Static web key; the integration's /web/* endpoints require this one (the iOS
+# key returns 403 there).
+WEB_X_API_KEY = "3iCWYuBqpY2g7yRq3yyTk1XCS4CMjt1n9ECCjdpd"
+IOS_USER_AGENT = (
+    "MRCOOL SmartHVAC/4.3.0 (com.smarthvac; build:2; iOS 26.5.0) Alamofire/5.9.1"
+)
+
 SWING_ADJUST = "Adjust"
 SWING_AUTO_STOP = "Auto/stop"
 SWING_AUTO = "Auto"

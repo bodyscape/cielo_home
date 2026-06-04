@@ -11,32 +11,36 @@ A Home Assistant custom integration to control Cielo Home devices.
 
 ## Configuration
 
-If you have installed a version prior 1.8.7 you need to uninstall the integration and install it again.
-You need to restart HA after the uninstall and after the install.
+This fork adds **email / password login** — no more extracting tokens from the
+browser. Setup is just:
 
-For find the field in the initial configuration setup follow this.
+1. In Home Assistant go to **Settings → Devices & Services → + Add Integration**.
+2. Search for **Cielo Home** and select it.
+3. Enter the **email** and **password** for your Cielo Home / MrCool account.
+4. (Optional) leave the two connection-source toggles unchecked unless you know
+   you need them.
 
-1. Open a new chrome to https://home.cielowigle.com/.
-2. Open the console tool with F12.
-3. Click on the 'Network' tab.
-4. Check the option 'Disable cache' and 'Preserve log'
-5. Fill your login, password and complete the recaptcha.
-6. Click 'Sign in'.
+That's it. Behind the scenes the integration logs in through Cielo's mobile API
+endpoint (which, unlike the web login, does not require a reCAPTCHA), obtains the
+session tokens automatically, and refreshes them as needed.
 
-![image](https://github.com/bodyscape/cielo_home/assets/30115568/3d1878e3-031e-4ab7-86ab-464c15b11eeb)
+> **How it works / notes**
+> - The password is sent as a SHA-256 hash, exactly as the official apps do.
+> - The websocket `sessionId` is generated locally (the mobile login does not
+>   return one). If live push updates ever stop working, that's the first thing
+>   to revisit.
+> - Two static app API keys are baked in (one for login, one for the `/web/*`
+>   API calls). If Cielo ever rotates them, they'd need updating in `const.py`.
+> - If the integration is offline long enough for the refresh token to expire,
+>   just reload it (or re-enter your credentials via the integration's options).
 
-7. Click on the new row on network who have the 'login' on it.
-8. Click on the new subtab 'Response'
-9. Copy all the Response in a text file and close Chrome (Don't sign out, close the whole Chrome not just the tab. Really important)
-10. Search within text file to find and copy/paste the values in configuration dialog (without quotes).
-11. Also Keep in mind if your HA or this integration don't run for more than 1 hour you must uninstall it and reinstall it.
-12. After you HA configuration it's done reopen your Chrome and check if you still logged on https://home.cielowigle.com/, if yes logout with the sign out button.
+<details>
+<summary>Legacy token-based setup (no longer required)</summary>
 
-![image](https://github.com/bodyscape/cielo_home/assets/30115568/96702e55-d4e0-4815-8316-a9a6cfbbab74)
-<img width="431" height="691" alt="image" src="https://github.com/user-attachments/assets/9e19b7bd-5c08-4161-ba1d-4895d65edf69" />
-
-
-
+Older versions required pasting `access_token`, `refresh_token`, `session_id`,
+`user_id`, and `x_api_key` extracted from the browser's network log on
+https://home.cielowigle.com/. The email/password flow above replaces that.
+</details>
 
 ## Functionality
 

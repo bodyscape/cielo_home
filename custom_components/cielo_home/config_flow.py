@@ -25,35 +25,42 @@ _LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required("access_token"): str,
-        vol.Required("refresh_token"): str,
-        vol.Required("session_id"): str,
-        vol.Required("user_id"): str,
-        vol.Required("x_api_key"): str,
-        vol.Required("force_connection_source"): bool,
-        vol.Required("connection_source"): bool,
+        vol.Required("username"): str,
+        vol.Required("password"): str,
+        vol.Optional("force_connection_source", default=False): bool,
+        vol.Optional("connection_source", default=False): bool,
     }
 )
 
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
-    """Validate the user input allows us to connect."""
+    """Log in with email/password and return the config-entry data to store."""
 
     api = CieloHome(hass, None)
 
-    if not await api.async_refresh_token(
-        data["access_token"],
-        data["refresh_token"],
-        data["session_id"],
-        data["user_id"],
-        data["x_api_key"],
-        True,
-    ):
+    tokens = await api.async_login(data["username"], data["password"])
+    if tokens is None:
         _LOGGER.error("Failed to login to Cielo Home")
         raise InvalidAuth
 
-    # Return info that you want to store in the config entry.
-    return {"title": "Cielo Home"}
+    # Confirm the obtained tokens actually work against the /web/* API.
+    if not await api.async_refresh_token(
+        tokens["access_token"],
+        tokens["refresh_token"],
+        tokens["session_id"],
+        tokens["user_id"],
+        tokens["x_api_key"],
+        True,
+    ):
+        _LOGGER.error("Cielo tokens failed validation")
+        raise InvalidAuth
+
+    entry_data = {
+        **tokens,
+        "force_connection_source": data.get("force_connection_source", False),
+        "connection_source": data.get("connection_source", False),
+    }
+    return {"title": "Cielo Home", "data": entry_data}
 
 
 class ConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -90,7 +97,7 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
             _LOGGER.exception("Unexpected exception")
             errors["base"] = "unknown"
         else:
-            return self.async_create_entry(title=info["title"], data=user_input)
+            return self.async_create_entry(title=info["title"], data=info["data"])
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
@@ -114,34 +121,33 @@ class OptionsFlowHandler(OptionsFlow):
         """Manage options."""
 
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+            # Persist the toggles into entry.data (where __init__ reads them)
+            # and trigger a reload via the update listener.
+            new_data = {
+                **self.config_entry.data,
+                "force_connection_source": user_input["force_connection_source"],
+                "connection_source": user_input["connection_source"],
+            }
+            self.hass.config_entries.async_update_entry(
+                self.config_entry, data=new_data
+            )
+            return self.async_create_entry(title="", data={})
 
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {
                     vol.Required(
-                        "access_token", default=self.config_entry.data["access_token"]
-                    ): str,
-                    vol.Required(
-                        "refresh_token", default=self.config_entry.data["refresh_token"]
-                    ): str,
-                    vol.Required(
-                        "session_id", default=self.config_entry.data["session_id"]
-                    ): str,
-                    vol.Required(
-                        "user_id", default=self.config_entry.data["user_id"]
-                    ): str,
-                    vol.Required(
-                        "x_api_key", default=self.config_entry.data["x_api_key"]
-                    ): str,
-                    vol.Required(
                         "force_connection_source",
-                        default=self.config_entry.data["force_connection_source"],
+                        default=self.config_entry.data.get(
+                            "force_connection_source", False
+                        ),
                     ): bool,
                     vol.Required(
                         "connection_source",
-                        default=self.config_entry.data["connection_source"],
+                        default=self.config_entry.data.get(
+                            "connection_source", False
+                        ),
                     ): bool,
                 }
             ),
