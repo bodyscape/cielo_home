@@ -8,6 +8,7 @@ from types import MappingProxyType, MethodType  # noqa: F401
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 
 from .cielohome import CieloHome
 from .cielohomedevice import CieloHomeDevice
@@ -43,7 +44,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry.data["user_id"],
         entry.data["x_api_key"],
     ):
-        _LOGGER.error("Failed to login to Cielo Home")
+        # Stored token could not be refreshed (expired/revoked). Trigger the
+        # re-auth flow so the user can log in again instead of silently ending
+        # up with all entities unavailable (see issue #109).
+        raise ConfigEntryAuthFailed(
+            "Cielo Home token refresh failed; please re-authenticate"
+        )
 
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = api

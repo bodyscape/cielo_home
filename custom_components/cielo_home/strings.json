@@ -2,12 +2,28 @@
   "config": {
     "step": {
       "user": {
+        "description": "Log in with your Cielo Home account.",
         "data": {
-          "access_token": "[%key:common::config_flow::data::access_token%]",
-          "refresh_token": "refresh_token",
-          "session_id": "session_id",
-          "user_id": "user_id",
-          "x_api_key": "x_api_key",
+          "username": "Email",
+          "password": "[%key:common::config_flow::data::password%]",
+          "force_connection_source": "force_connection_source",
+          "connection_source": "connection_source"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate Cielo Home",
+        "description": "The stored token has expired. Enter your Cielo Home email and password to sign in again.",
+        "data": {
+          "username": "Email",
+          "password": "[%key:common::config_flow::data::password%]"
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure Cielo Home",
+        "description": "Enter your Cielo Home email and password to refresh the connection without removing the integration.",
+        "data": {
+          "username": "Email",
+          "password": "[%key:common::config_flow::data::password%]",
           "force_connection_source": "force_connection_source",
           "connection_source": "connection_source"
         }
@@ -19,7 +35,9 @@
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]",
+      "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]"
     }
   }
 }
