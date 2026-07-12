@@ -1,7 +1,9 @@
 {
     "config": {
         "abort": {
-            "already_configured": "Device is already configured"
+            "already_configured": "Device is already configured",
+            "reauth_successful": "Re-authentication was successful",
+            "reconfigure_successful": "Re-configuration was successful"
         },
         "error": {
             "cannot_connect": "Failed to connect",
@@ -10,11 +12,28 @@
         },
         "step": {
             "user": {
+                "description": "Log in with your Cielo Home account.",
                 "data": {
-                    "access_token": "Access Token (accessToken)",
-                    "refresh_token": "Refresh Token (refreshToken)",
-                    "session_id": "Session Id (sessionId)",
-                    "user_id": "User Id (userId)",
+                    "username": "Email",
+                    "password": "Password",
+                    "force_connection_source": "Force connection source value (False by default)",
+                    "connection_source": "Connection source value (True or False)"
+                }
+            },
+            "reauth_confirm": {
+                "title": "Re-authenticate Cielo Home",
+                "description": "The stored token has expired. Enter your Cielo Home email and password to sign in again.",
+                "data": {
+                    "username": "Email",
+                    "password": "Password"
+                }
+            },
+            "reconfigure": {
+                "title": "Reconfigure Cielo Home",
+                "description": "Enter your Cielo Home email and password to refresh the connection without removing the integration.",
+                "data": {
+                    "username": "Email",
+                    "password": "Password",
                     "force_connection_source": "Force connection source value (False by default)",
                     "connection_source": "Connection source value (True or False)"
                 }

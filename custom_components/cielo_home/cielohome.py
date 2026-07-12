@@ -111,12 +111,14 @@ class CieloHome:
         self._last_refresh_token_ts = self.get_ts()
         self._token_expire_in_ts = self.get_ts() + TIME_REFRESH_TOKEN
 
-        await self.async_refresh_token(test=True)
+        authenticated = await self.async_refresh_token(test=True)
 
-        if self._access_token != "":
+        # Only open the websocket when the token is actually valid; starting it
+        # with a dead token just produces a wss 403 (see issue #109).
+        if authenticated and self._access_token != "":
             self.create_websocket_log_exception(False)
 
-        return True
+        return authenticated
 
     async def async_refresh_token(
         self,
