@@ -383,7 +383,7 @@ class CieloHomeDevice:
 
     def send_follow_me(self, value) -> None:
         """None."""
-        if self._device["latestAction"]["followme"] == value:
+        if self._device["latestAction"].get("followme") == value:
             return
 
         action = self._get_action()
@@ -716,8 +716,14 @@ class CieloHomeDevice:
         return self._device["latestAction"]["power"]
 
     def get_follow_me(self) -> str:
-        """None."""
-        return self._device["latestAction"]["followme"]
+        """Return the FollowMe state, defaulting to "off" when absent.
+
+        Some appliances advertise FollowMe support (appliance["followme"])
+        but do not include "followme" in latestAction until it is first
+        toggled. Reading it unguarded raised KeyError during switch setup,
+        crashing the switch platform and leaving all entities unavailable.
+        """
+        return self._device["latestAction"].get("followme", "off")
 
     def get_light(self) -> str:
         """None."""
