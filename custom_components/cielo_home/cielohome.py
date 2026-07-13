@@ -52,6 +52,9 @@ class CieloHome:
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Set up Cielo Home api."""
         self.can_reload: bool = True
+        # Snapshot of entry.data so update_listener can tell a genuine
+        # config change from our own token-rotation writes.
+        self.last_entry_data: dict = dict(entry.data) if entry is not None else {}
         self._is_running: bool = True
         self._stop_running: bool = False
         self._access_token: str = ""
