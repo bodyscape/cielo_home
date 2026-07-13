@@ -33,6 +33,11 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 TIMEOUT_RECONNECT = 10
+# Exponential backoff bounds for repeated websocket-connect failures. The
+# WSS endpoint rate-limits (HTTP 429) on rapid reconnects from the same IP;
+# without backoff the integration reconnect-storms and the throttle never
+# clears. Backoff grows 10s -> 20s -> 40s ... capped at 5 min.
+RECONNECT_BACKOFF_MAX = 300
 TIME_REFRESH_TOKEN = 3300
 TIMER_PING = 540
 TIMER_PONG = 60
@@ -70,6 +75,7 @@ class CieloHome:
         self._last_connection_ts: int = 0
         self._last_x_api_key: str = None
         self._reconnect_now = False
+        self._reconnect_attempts: int = 0
         self.hass: HomeAssistant = hass
         self._entry: ConfigEntry = entry
         self._appliance_id = None
@@ -317,6 +323,9 @@ class CieloHome:
 
                     _LOGGER.info("Connected success")
                     self._last_connection_ts = self.get_ts()
+                    # A genuine handshake succeeded — clear the backoff so the
+                    # next transient drop reconnects promptly.
+                    self._reconnect_attempts = 0
                     self.stop_timer_connection_lost()
 
                     if update_state:
@@ -433,10 +442,21 @@ class CieloHome:
             #    listener.lost_connection()
             self.start_timer_connection_lost()
             if not self._reconnect_now:
-                _LOGGER.debug(
-                    "Try reconnection in " + str(TIMEOUT_RECONNECT) + " secondes"
+                # Connection failed to establish (or dropped immediately) —
+                # back off exponentially so repeated handshake rejections
+                # (e.g. HTTP 429 rate-limits) don't turn into a reconnect
+                # storm that keeps the endpoint throttled.
+                self._reconnect_attempts += 1
+                delay = min(
+                    TIMEOUT_RECONNECT * (2 ** (self._reconnect_attempts - 1)),
+                    RECONNECT_BACKOFF_MAX,
                 )
-                await asyncio.sleep(TIMEOUT_RECONNECT)
+                _LOGGER.debug(
+                    "Try reconnection in %s seconds (attempt %s)",
+                    delay,
+                    self._reconnect_attempts,
+                )
+                await asyncio.sleep(delay)
             else:
                 _LOGGER.debug("Reconnection")
             self._last_ts_ping = 0
