@@ -4,7 +4,7 @@ from homeassistant.components.climate import PRESET_NONE
 
 DOMAIN = "cielo_home"
 URL_API = "api.smartcielo.com"
-URL_API_WSS = "apiwss.smartcielo.com"
+URL_API_WSS = "wss.smartcielo.com"
 URL_CIELO = "https://home.cielowigle.com/"
 USER_AGENT = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"
 
