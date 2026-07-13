@@ -157,18 +157,25 @@ class CieloHome:
                 self._user_id = user_id
                 self._last_x_api_key = x_api_key
 
-            headers: dict[str, str] = self._headers
-            headers["authorization"] = self._access_token
-            headers["x-api-key"] = self._last_x_api_key
+            # The legacy /web/token/refresh endpoint now returns 403
+            # ForbiddenException at the CloudFront edge for every caller
+            # (valid tokens included). The current mobile app refreshes via
+            # /user/token/refresh using the iOS app key, so we use that here.
+            headers: dict[str, str] = {
+                "accept": "*/*",
+                "content-type": "application/json",
+                "x-api-key": IOS_X_API_KEY,
+                "user-agent": IOS_USER_AGENT,
+                "authorization": self._access_token,
+            }
 
             data = {
-                "local": "en",
                 "refreshToken": self._refresh_token,
             }
             async with ClientSession() as session:  # noqa: SIM117
                 async with session.post(
-                    "https://" + URL_API + "/web/token/refresh",
-                    headers=self._headers,
+                    "https://" + URL_API + "/user/token/refresh",
+                    headers=headers,
                     json=data,
                 ) as response:
                     if response.status == 200:
