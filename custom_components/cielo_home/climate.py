@@ -38,6 +38,7 @@ from .const import (
     SWING_POSITION6_VALUE,
 )
 from .entity import CieloHomeEntity
+from .temperature import quantize_temperature
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -155,11 +156,17 @@ class CieloHomeThermostat(CieloHomeEntity, ClimateEntity):
             self.set_hvac_mode(HVACMode(kwargs[ATTR_HVAC_MODE]))
 
         if ATTR_TEMPERATURE in kwargs:
+            requested_temperature = quantize_temperature(
+                float(kwargs[ATTR_TEMPERATURE]),
+                self.min_temp,
+                self.max_temp,
+                self.target_temperature_step,
+            )
             temp: int = int(
                 self._device.get_adjust_temp(
                     self._device.get_unit_of_temperature_appliance(),
                     self._attr_temperature_unit,
-                    int(kwargs.get(ATTR_TEMPERATURE)),
+                    requested_temperature,
                 )
             )
             self._device.send_temperature(temp)
