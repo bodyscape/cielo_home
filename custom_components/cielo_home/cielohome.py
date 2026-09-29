@@ -72,7 +72,7 @@ class CieloHome:
         self._timer_connection_lost: Timer = None
         self._last_refresh_token_ts: int
         self._token_expire_in_ts: int
-        self._last_ts_msg: int = 0
+        self._last_ts_msg: dict[str, int] = {}
         self._last_ts_ping: int = 0
         self._last_ts_pong: int = 0
         self._last_connection_ts: int = 0
@@ -473,13 +473,26 @@ class CieloHome:
             if msg["mid"] == "":
                 msg["mid"] = self._session_id
 
-        msg["ts"] = self.get_ts()
+        # Keep the timestamps unique PER DEVICE, not per account.
+        #
+        # get_ts() has one-second resolution, so two commands to the same device
+        # inside one second collide. A single shared "last ts" cannot prevent
+        # that once the account holds more than one device: with the sends
+        # interleaved (A, B, A, B) each comparison lands against the OTHER
+        # device's value, so both of A's commands and both of B's go out sharing
+        # a ts.
+        #
+        # `<=` rather than `==` so a third message in the same second is pushed
+        # forward too; a single `+1` off an equality test leaves it colliding
+        # with the first.
+        mac = msg.get("macAddress") or msg.get("mac_address") or ""
+        ts = self.get_ts()
+        last_ts = self._last_ts_msg.get(mac, 0)
+        if ts <= last_ts:
+            ts = last_ts + 1
 
-        # to be sure each msg have different ts, when 2 msg are send quickly
-        if msg["ts"] == self._last_ts_msg:
-            msg["ts"] = msg["ts"] + 1
-
-        self._last_ts_msg = msg["ts"]
+        self._last_ts_msg[mac] = ts
+        msg["ts"] = ts
 
         self.send_json(msg)
 
