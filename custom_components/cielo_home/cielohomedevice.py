@@ -781,9 +781,11 @@ class CieloHomeDevice:
             "mode": self._device["latestAction"]["mode"],
             "fanspeed": self._device["latestAction"]["fanspeed"],
             "temp": self._device["latestAction"]["temp"],
-            "swing": self._device["latestAction"]["swing"],
             "swinginternal": "",
         }
+
+        with contextlib.suppress(KeyError):
+            action["swing"] = self._device["latestAction"]["swing"]
 
         with contextlib.suppress(KeyError):
             action["turbo"] = self._device["latestAction"]["turbo"]
